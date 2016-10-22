@@ -44,7 +44,7 @@ int main( int argc, char * argv[] )
 
     my_addr.sin_family = AF_INET; // rodzaj gniazda z ktorego kozysta TCP/IP
     my_addr.sin_port = htons( MYPORT ); // numer portu
-    my_addr.sin_addr.s_addr = inet_addr( "127.0.0.1" ); // moje IP
+    my_addr.sin_addr.s_addr = inet_addr( "0.0.0.0" ); // moje IP
     memset( &( my_addr.sin_zero ), '\0', 8 ); // zerowanie reszty struktury
 
     if( bind( sockfd,( struct sockaddr * ) & my_addr, sizeof( struct sockaddr ) ) == - 1 ) ERROR;
