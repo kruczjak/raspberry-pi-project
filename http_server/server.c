@@ -10,10 +10,9 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-#ifndef MYPORT
-#define MYPORT 80 // port z ktorym beda sie laczyc clienci..
-#endif
-#define BACKLOG 10 // ilosc polaczen oczekujacych w kolejce
+#define PORT 80
+#define BACKLOG 10 // queue
+#define SERVER_NAME "Server: kruczjak server"
 
 #define ERROR {printf("FATAL (line %d): %s\n", __LINE__, strerror(errno)); \
         exit(errno);}
@@ -43,7 +42,7 @@ int main( int argc, char * argv[] )
     if( setsockopt( sockfd, SOL_SOCKET, SO_REUSEADDR, & yes, sizeof( int ) ) == - 1 ) ERROR;
 
     my_addr.sin_family = AF_INET; // rodzaj gniazda z ktorego kozysta TCP/IP
-    my_addr.sin_port = htons( MYPORT ); // numer portu
+    my_addr.sin_port = htons( PORT ); // numer portu
     my_addr.sin_addr.s_addr = inet_addr( "0.0.0.0" ); // moje IP
     memset( &( my_addr.sin_zero ), '\0', 8 ); // zerowanie reszty struktury
 
@@ -95,4 +94,28 @@ int main( int argc, char * argv[] )
 
     }
     return 0;
+}
+
+void print_base_headers(int client) {
+    char buf[64];
+    // HTTP version header
+    strcpy(buf, "HTTP/1.0 200 OK\r\n");
+    send(client, buf, strlen(buf), 0);
+    // server name
+    strcpy(buf, SERVER_NAME);
+    send(client, buf, strlen(buf), 0);
+    //content type
+    strcpy(buf, "Content-Type: text/html\r\n");
+    send(client, buf, strlen(buf), 0);
+    strcpy(buf, "\r\n");
+    send(client, buf, strlen(buf), 0);
+}
+
+void send_file(int client, const char *filename) {
+    FILE *resource = NULL;
+
+    resource = fopen(filename, "r");
+    print_base_headers(client);
+    cat_to_socket(client, resource);
+    fclose(resource);
 }
