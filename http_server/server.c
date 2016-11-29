@@ -300,6 +300,8 @@ void render_gpio(int client) {
     send(client, buffer, strlen(buffer), 0);
     sprintf(buffer, "Content-Type: text/html; charset=UTF-8\r\n");
     send(client, buffer, strlen(buffer), 0);
+    strcpy(buffer, "\r\n");
+    send(client, buffer, strlen(buffer), 0);
 
     buffer[0] = get_simple_state(LED_RED);
     buffer[1] = END_OF_LINE;
@@ -313,8 +315,6 @@ void render_gpio(int client) {
     buffer[1] = END_OF_LINE;
     send(client, buffer, strlen(buffer), 0);
 
-    strcpy(buffer, "\r\n");
-    send(client, buffer, strlen(buffer), 0);
     strcpy(buffer, "\r\n");
     send(client, buffer, strlen(buffer), 0);
 
