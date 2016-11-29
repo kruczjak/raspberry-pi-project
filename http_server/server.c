@@ -7,9 +7,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
+#include <sys/mman.h>
 #include <pthread.h>
 #include <sys/stat.h>
 #include <ctype.h>
+#include <fcntl.h>
 
 #define PORT 80
 #define BACKLOG_SIZE 10 // queue
@@ -18,13 +20,71 @@
 
 #define ERROR {printf("FATAL (line %d): %s\n", __LINE__, strerror(errno)); exit(errno);}
 
+/* ############################################################ */
+#define BCM2835_PERI_BASE       0x20000000
+#define GPIO_BASE               (BCM2835_PERI_BASE + 0x200000)
+#define BLOCK_SIZE 		        (4*1024)
+
+// GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x)
+#define INP_GPIO(g)   *(gpio.addr + ((g)/10)) &= ~(7<<(((g)%10)*3))
+#define OUT_GPIO(g)   *(gpio.addr + ((g)/10)) |=  (1<<(((g)%10)*3))
+#define SET_GPIO_ALT(g,a) *(gpio.addr + (((g)/10))) |= (((a)<=3?(a) + 4:(a)==4?3:2)<<(((g)%10)*3))
+
+#define GPIO_SET  *(gpio.addr + 7)  // sets   bits which are 1 ignores bits which are 0
+#define GPIO_CLR  *(gpio.addr + 10) // clears bits which are 1 ignores bits which are 0
+
+#define GPIO_READ(g)  *(gpio.addr + 13) &= (1<<(g))
+
+struct bcm2835_peripheral {
+    off_t addr_p;
+    int mem_fd;
+    void *map;
+    volatile unsigned int *addr;
+};
+
+struct bcm2835_peripheral gpio = {GPIO_BASE};
+
+int map_peripheral(struct bcm2835_peripheral *p)
+{
+    // Open /dev/mem
+    if ((p->mem_fd = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) {
+        printf("Failed to open /dev/mem, try checking permissions.\n");
+        return -1;
+    }
+
+    p->map = mmap(
+            NULL,
+            BLOCK_SIZE,
+            PROT_READ|PROT_WRITE,
+            MAP_SHARED,
+            p->mem_fd,      // File descriptor to physical memory virtual file '/dev/mem'
+            p->addr_p       // Address in physical map that we want this memory block to expose
+    );
+
+    if (p->map == MAP_FAILED) {
+        ERROR;
+        return -1;
+    }
+
+    p->addr = (volatile unsigned int *) p->map;
+
+    return 0;
+}
+
+void unmap_peripheral(struct bcm2835_peripheral *p) {
+    munmap(p->map, BLOCK_SIZE);
+    close(p->mem_fd);
+}
+/* ############################################################ */
+
 //definitions
 int get_line_from_socket_to_buffer(int, char *, int);
 void response_file_headers(int);
 void cat_file_to_socket(int, FILE *);
 void send_file(int client_socket, const char *filename);
 void accept_client_request(int client);
-int startSocketListening();
+int start_socket_listening();
+void process_post(int byte_number, char byte);
 
 void render_index(int client);
 
@@ -164,6 +224,32 @@ void accept_client_request(int client) {
     // POST przetwarzanie
     if (strcasecmp(request_type, "POST") == 0) {
         // POST!!!
+        char buffer[1024];
+        int content_length = -1;
+        int number_of_chars;
+
+        buffer[0] = 'A';
+        buffer[1] = END_OF_LINE;
+
+        // content-length
+        number_of_chars = get_line_from_socket_to_buffer(client, buffer, sizeof(buffer));
+        while ((number_of_chars > 0) && strcmp("\n", buffer)) {
+            buffer[15] = '\0';
+            if (strcasecmp(buffer, "Content-Length:") == 0) content_length = atoi(&(buffer[16]));
+            number_of_chars = get_line_from_socket_to_buffer(client, buffer, sizeof(buffer));
+        }
+
+        printf("DEBUG: CONTENT_LENGTH=%d\r\n", content_length);
+
+        char single_byte;
+
+        for (int i = 0; i < content_length; i++) {
+            recv(client, &single_byte, 1, 0);
+            printf("DEBUG: POST_BODY[%d]=%c\r\n", i, single_byte);
+            process_post(i, single_byte);
+        }
+        printf("END OF POST\r\n");
+
         response_file_headers(client);
     }
 
@@ -179,7 +265,7 @@ void render_index(int client) {
     close(client);
 }
 
-int startSocketListening() {
+int start_socket_listening() {
     int httpd;
     struct sockaddr_in server_addr;
 
@@ -197,10 +283,40 @@ int startSocketListening() {
     return httpd;
 }
 
+/* ############################################ */
+/*
+ * POST body:
+ * 0 - LED GREEN 0/1
+ * 1 - LED RED 0/1
+ * 2 - LED BLUE 0/1
+ */
+/* ############################################ */
+void process_post(int byte_number, char byte) {
+    switch(byte_number) {
+        case 0:
+            if (byte == '0') return;
+            if (byte == '1') return;
+            return;
+        case 1:
+            if (byte == '0') return;
+            if (byte == '1') return;
+            return;
+        case 2:
+            if (byte == '0') return;
+            if (byte == '1') return;
+            return;
+        default:
+            printf(":/");
+            return;
+    }
+}
+
 int main( int argc, char * argv[] ) {
     int server_socket;
     int client_socket;
     pthread_t client_thread;
+
+    map_peripheral(&gpio); // mapowanie GPIO
 
     set_sigchld_trap();
 
@@ -208,7 +324,7 @@ int main( int argc, char * argv[] ) {
     socklen_t client_addr_length = sizeof(client_addr);
 
     // starting server
-    server_socket = startSocketListening();
+    server_socket = start_socket_listening();
     printf("http server running on port %d\n", PORT);
 
     // starting client request accepting
@@ -220,6 +336,7 @@ int main( int argc, char * argv[] ) {
     }
 
     close(server_socket);
+    unmap_peripheral(&gpio);
 
     return 0;
 }

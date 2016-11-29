@@ -12,14 +12,24 @@
   <h1 style="text-align: center;">Sterowanie</h1>
   <div>Połączenie:</div>
 
-  <label for="led_red" style="color: red;">LED czerwony <input type="checkbox" name="led_red" id="led_red" /></label><br/>
-  <label for="led_green" style="color: green;">LED zielony <input type="checkbox" name="led_green" id="led_green" /></label><br/>
-  <label for="led_blue" style="color: blue;">LED niebieski <input type="checkbox" name="led_blue" id="led_blue" /></label>
+  <form>
+    <label for="led_red" style="color: red;">LED czerwony <input type="checkbox" name="led_red" id="led_red" /></label><br/>
+    <label for="led_green" style="color: green;">LED zielony <input type="checkbox" name="led_green" id="led_green" /></label><br/>
+    <label for="led_blue" style="color: blue;">LED niebieski <input type="checkbox" name="led_blue" id="led_blue" /></label>
+
+    <button type="button" id="send">Send</button>
+  </form>
 
   <div style="text-align: right;">by Jakub Kruczek</div>
 </body>
 
   <script type="text/javascript">
-    setInterval(function(){ }, 500);
+    $('#send').click(function(e) {
+      $.ajax({
+        type: 'POST',
+        url: '192.168.43.2',
+        data: {}
+      })
+    });
   </script>
 </html>
