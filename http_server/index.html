@@ -28,8 +28,18 @@
       $.ajax({
         type: 'POST',
         url: '/',
-        data: '111'
+        data: buildPayload()
       })
     });
+
+    function buildPayload() {
+      var payload = '';
+
+      payload += ($('#led_red').is(":checked") ? '0' : '1');
+      payload += ($('#led_green').is(":checked") ? '0' : '1');
+      payload += ($('#led_blue').is(":checked") ? '0' : '1');
+
+      return payload;
+    }
   </script>
 </html>

@@ -35,6 +35,12 @@
 
 #define GPIO_READ(g)  *(gpio.addr + 13) &= (1<<(g))
 
+// payload
+#define LED_RED 16 // 0/1
+#define LED_GREEN 20 // 0/1
+#define LED_BLUE 21 // 0/1
+// end of payload
+
 struct bcm2835_peripheral {
     off_t addr_p;
     int mem_fd;
@@ -287,18 +293,10 @@ int start_socket_listening() {
     return httpd;
 }
 
-/* ############################################ */
-/*
- * POST body:
- * 0 - LED GREEN 0/1 - GPIO16
- * 1 - LED RED 0/1 - GPIO20
- * 2 - LED BLUE 0/1 - GPIO21
- */
-/* ############################################ */
 void initialize_ports() {
-    init_output(16);
-    init_output(20);
-    init_output(21);
+    init_output(LED_RED);
+    init_output(LED_GREEN);
+    init_output(LED_BLUE);
 }
 
 void enable_port(unsigned int port_number) {
@@ -321,16 +319,16 @@ void init_input(unsigned int port_number) {
 void process_post(int byte_number, char byte) {
     switch(byte_number) {
         case 0:
-            if (byte == '0') enable_port(16);
-            if (byte == '1') disable_port(16);
+            if (byte == '0') enable_port(LED_RED);
+            if (byte == '1') disable_port(LED_RED);
             return;
         case 1:
-            if (byte == '0') enable_port(20);
-            if (byte == '1') disable_port(20);
+            if (byte == '0') enable_port(LED_GREEN);
+            if (byte == '1') disable_port(LED_GREEN);
             return;
         case 2:
-            if (byte == '0') enable_port(21);
-            if (byte == '1') disable_port(21);
+            if (byte == '0') enable_port(LED_BLUE);
+            if (byte == '1') disable_port(LED_BLUE);
             return;
         default:
             printf(":/");
