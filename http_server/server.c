@@ -21,7 +21,7 @@
 #define ERROR {printf("FATAL (line %d): %s\n", __LINE__, strerror(errno)); exit(errno);}
 
 /* ############################################################ */
-#define BCM2835_PERI_BASE       0x20000000
+#define BCM2835_PERI_BASE       0x3F000000
 #define GPIO_BASE               (BCM2835_PERI_BASE + 0x200000)
 #define BLOCK_SIZE 		        (4*1024)
 
@@ -293,30 +293,30 @@ int start_socket_listening() {
  */
 /* ############################################ */
 void initialize_ports() {
-    INP_GPIO(4);
-    INP_GPIO(8);
-    INP_GPIO(7);
-    OUT_GPIO(4);
-    OUT_GPIO(8);
-    OUT_GPIO(7);
-    GPIO_SET = 1 << 4;
-    GPIO_SET = 1 << 8;
-    GPIO_SET = 1 << 7;
+    INP_GPIO(16);
+    INP_GPIO(20);
+    INP_GPIO(21);
+    OUT_GPIO(16);
+    OUT_GPIO(20);
+    OUT_GPIO(21);
+    GPIO_SET = 1 << 16;
+    GPIO_SET = 1 << 20;
+    GPIO_SET = 1 << 21;
 }
 
 void process_post(int byte_number, char byte) {
     switch(byte_number) {
         case 0:
-            if (byte == '0') GPIO_SET = 1 << 4;
-            if (byte == '1') GPIO_CLR = 1 << 4;
+            if (byte == '0') GPIO_SET = 1 << 16;
+            if (byte == '1') GPIO_CLR = 1 << 16;
             return;
         case 1:
-            if (byte == '0') GPIO_SET = 1 << 8;
-            if (byte == '1') GPIO_CLR = 1 << 8;
+            if (byte == '0') GPIO_SET = 1 << 20;
+            if (byte == '1') GPIO_CLR = 1 << 20;
             return;
         case 2:
-            if (byte == '0') GPIO_SET = 1 << 7;
-            if (byte == '1') GPIO_CLR = 1 << 7;
+            if (byte == '0') GPIO_SET = 1 << 21;
+            if (byte == '1') GPIO_CLR = 1 << 21;
             return;
         default:
             printf(":/");
