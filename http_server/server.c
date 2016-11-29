@@ -97,6 +97,7 @@ void enable_port(unsigned int);
 void disable_port(unsigned int);
 void init_output(unsigned int);
 void init_input(unsigned int);
+void render_gpio(int);
 
 void sigchld_handler(int s) {
     while( wait( NULL ) > 0 );
@@ -228,6 +229,7 @@ void accept_client_request(int client) {
     // GET przetwarzanie
     if (strcasecmp(request_type, "GET") == 0) {
         if (strcasecmp(query_string, "") == 0) return render_index(client);
+        if (strcasecmp(query_string, "gpio") == 0) return render_gpio(client);
         // GET with query string
 
     }
@@ -271,6 +273,40 @@ void render_index(int client) {
     printf("DEBUG: Rendering index.html\r\n");
 
     send_file(client, "index.html");
+    fflush(stdout);
+    close(client);
+}
+
+void render_gpio(int client) {
+    printf("DEBUG: Rendering GPIO\r\n");
+    int number_of_chars = 1;
+    char buffer[1024];
+    buffer[0] = 'A';
+    buffer[1] = END_OF_LINE;
+
+    while ((number_of_chars > 0) && strcmp("\n", buffer)) {
+        number_of_chars = get_line_from_socket_to_buffer(client, buffer, sizeof(buffer));
+    }
+
+    buffer[0] = END_OF_LINE;
+
+    printf("LED_RED state: %u\r\n", GPIO_READ(LED_RED));
+
+    strcpy(buffer, "HTTP/1.0 200 OK\r\n");
+    send(client, buffer, strlen(buffer), 0);
+    strcpy(buffer, SERVER_NAME);
+    send(client, buffer, strlen(buffer), 0);
+
+    strcpy(buffer, GPIO_READ(LED_RED));
+    send(client, buffer, strlen(buffer), 0);
+    strcpy(buffer, GPIO_READ(LED_GREEN));
+    send(client, buffer, strlen(buffer), 0);
+    strcpy(buffer, GPIO_READ(LED_BLUE));
+    send(client, buffer, strlen(buffer), 0);
+
+    strcpy(buffer, "\r\n");
+    send(client, buffer, strlen(buffer), 0);
+
     fflush(stdout);
     close(client);
 }
