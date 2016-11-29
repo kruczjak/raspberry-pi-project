@@ -98,6 +98,7 @@ void disable_port(unsigned int);
 void init_output(unsigned int);
 void init_input(unsigned int);
 void render_gpio(int);
+char get_simple_state(unsigned int);
 
 void sigchld_handler(int s) {
     while( wait( NULL ) > 0 );
@@ -191,7 +192,6 @@ void accept_client_request(int client) {
     char request_type[255];
     char url[255];
     size_t position = 0, current_buffer_position = 0;
-    struct stat st;
 
     char *query_string = NULL;
 
@@ -299,11 +299,16 @@ void render_gpio(int client) {
     strcpy(buffer, SERVER_NAME);
     send(client, buffer, strlen(buffer), 0);
 
-    strcpy(buffer, GPIO_READ(LED_RED));
+    buffer[0] = get_simple_state(LED_RED);
+    buffer[1] = END_OF_LINE;
     send(client, buffer, strlen(buffer), 0);
-    strcpy(buffer, GPIO_READ(LED_GREEN));
+    
+    buffer[0] = get_simple_state(LED_GREEN);
+    buffer[1] = END_OF_LINE;
     send(client, buffer, strlen(buffer), 0);
-    strcpy(buffer, GPIO_READ(LED_BLUE));
+
+    buffer[0] = get_simple_state(LED_BLUE);
+    buffer[1] = END_OF_LINE;
     send(client, buffer, strlen(buffer), 0);
 
     strcpy(buffer, "\r\n");
@@ -311,6 +316,13 @@ void render_gpio(int client) {
 
     fflush(stdout);
     close(client);
+}
+
+char get_simple_state(unsigned int port_number) {
+    unsigned int readed_value = GPIO_READ(port_number);
+
+    if (readed_value == 0) return '0';
+    return '1';
 }
 
 int start_socket_listening() {
