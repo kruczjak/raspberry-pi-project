@@ -293,9 +293,15 @@ int start_socket_listening() {
  */
 /* ############################################ */
 void initialize_ports() {
+    INP_GPIO(16);
+    INP_GPIO(20);
+    INP_GPIO(21);
     OUT_GPIO(16);
     OUT_GPIO(20);
     OUT_GPIO(21);
+    GPIO_SET = 1 << 16;
+    GPIO_SET = 1 << 20;
+    GPIO_SET = 1 << 21;
 }
 
 void process_post(int byte_number, char byte) {
