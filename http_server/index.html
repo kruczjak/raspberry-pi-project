@@ -44,9 +44,9 @@
     }
 
     $.get('/?gpio', function(data) {
-      $('#led_red').prop("checked", data[0] === '0');
-      $('#led_green').prop("checked", data[1] === '0');
-      $('#led_blue').prop("checked", data[2] === '0');
+      $('#led_red').prop("checked", data[0] === '1');
+      $('#led_green').prop("checked", data[1] === '1');
+      $('#led_blue').prop("checked", data[2] === '1');
     });
   </script>
 </html>
