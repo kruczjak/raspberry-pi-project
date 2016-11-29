@@ -82,12 +82,15 @@ int get_line_from_socket_to_buffer(int, char *, int);
 void response_file_headers(int);
 void cat_file_to_socket(int, FILE *);
 void send_file(int client_socket, const char *filename);
-void accept_client_request(int client);
+void accept_client_request(int);
 int start_socket_listening();
-void process_post(int byte_number, char byte);
+void process_post(int, char);
 void initialize_ports();
-
-void render_index(int client);
+void render_index(int);
+void enable_port(unsigned int);
+void disable_port(unsigned int);
+void init_output(unsigned int);
+void init_input(unsigned int);
 
 void sigchld_handler(int s) {
     while( wait( NULL ) > 0 );
@@ -293,30 +296,41 @@ int start_socket_listening() {
  */
 /* ############################################ */
 void initialize_ports() {
-    INP_GPIO(16);
-    INP_GPIO(20);
-    INP_GPIO(21);
-    OUT_GPIO(16);
-    OUT_GPIO(20);
-    OUT_GPIO(21);
-    GPIO_SET = 1 << 16;
-    GPIO_SET = 1 << 20;
-    GPIO_SET = 1 << 21;
+    init_output(16);
+    init_output(20);
+    init_output(21);
+}
+
+void enable_port(unsigned int port_number) {
+    GPIO_SET = 1 << port_number;
+}
+
+void disable_port(unsigned int port_number) {
+    GPIO_CLR = 1 << port_number;
+}
+
+void init_output(unsigned int port_number) {
+    INP_GPIO(port_number);
+    OUT_GPIO(port_number);
+}
+
+void init_input(unsigned int port_number) {
+    INP_GPIO(port_number);
 }
 
 void process_post(int byte_number, char byte) {
     switch(byte_number) {
         case 0:
-            if (byte == '0') GPIO_SET = 1 << 16;
-            if (byte == '1') GPIO_CLR = 1 << 16;
+            if (byte == '0') enable_port(16);
+            if (byte == '1') disable_port(16);
             return;
         case 1:
-            if (byte == '0') GPIO_SET = 1 << 20;
-            if (byte == '1') GPIO_CLR = 1 << 20;
+            if (byte == '0') enable_port(20);
+            if (byte == '1') disable_port(20);
             return;
         case 2:
-            if (byte == '0') GPIO_SET = 1 << 21;
-            if (byte == '1') GPIO_CLR = 1 << 21;
+            if (byte == '0') enable_port(21);
+            if (byte == '1') disable_port(21);
             return;
         default:
             printf(":/");
