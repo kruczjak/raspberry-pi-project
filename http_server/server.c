@@ -229,7 +229,7 @@ void accept_client_request(int client) {
     // GET przetwarzanie
     if (strcasecmp(request_type, "GET") == 0) {
         if (strcasecmp(query_string, "") == 0) return render_index(client);
-        if (strcasecmp(query_string, "gpio") == 0) return render_gpio(client);
+        if (strcasecmp(query_string, "?gpio") == 0) return render_gpio(client);
         // GET with query string
 
     }
