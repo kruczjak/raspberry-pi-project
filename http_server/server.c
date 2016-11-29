@@ -324,6 +324,7 @@ int main( int argc, char * argv[] ) {
     pthread_t client_thread;
 
     map_peripheral(&gpio); // mapowanie GPIO
+    initialize_ports();
 
     set_sigchld_trap();
 
