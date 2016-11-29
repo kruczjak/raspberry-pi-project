@@ -291,6 +291,8 @@ void render_gpio(int client) {
     buffer[0] = END_OF_LINE;
 
     printf("LED_RED state: %u\r\n", GPIO_READ(LED_RED));
+    printf("LED_GREEN state: %u\r\n", GPIO_READ(LED_GREEN));
+    printf("LED_BLUE state: %u\r\n", GPIO_READ(LED_BLUE));
 
     strcpy(buffer, "HTTP/1.0 200 OK\r\n");
     send(client, buffer, strlen(buffer), 0);
