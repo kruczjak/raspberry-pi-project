@@ -85,6 +85,7 @@ void send_file(int client_socket, const char *filename);
 void accept_client_request(int client);
 int start_socket_listening();
 void process_post(int byte_number, char byte);
+void initialize_ports();
 
 void render_index(int client);
 
@@ -286,24 +287,30 @@ int start_socket_listening() {
 /* ############################################ */
 /*
  * POST body:
- * 0 - LED GREEN 0/1
- * 1 - LED RED 0/1
- * 2 - LED BLUE 0/1
+ * 0 - LED GREEN 0/1 - GPIO16
+ * 1 - LED RED 0/1 - GPIO20
+ * 2 - LED BLUE 0/1 - GPIO21
  */
 /* ############################################ */
+void initialize_ports() {
+    OUT_GPIO(16);
+    OUT_GPIO(20);
+    OUT_GPIO(21);
+}
+
 void process_post(int byte_number, char byte) {
     switch(byte_number) {
         case 0:
-            if (byte == '0') return;
-            if (byte == '1') return;
+            if (byte == '0') GPIO_SET = 1 << 16;
+            if (byte == '1') GPIO_CLR = 1 << 16;
             return;
         case 1:
-            if (byte == '0') return;
-            if (byte == '1') return;
+            if (byte == '0') GPIO_SET = 1 << 20;
+            if (byte == '1') GPIO_CLR = 1 << 20;
             return;
         case 2:
-            if (byte == '0') return;
-            if (byte == '1') return;
+            if (byte == '0') GPIO_SET = 1 << 21;
+            if (byte == '1') GPIO_CLR = 1 << 21;
             return;
         default:
             printf(":/");
