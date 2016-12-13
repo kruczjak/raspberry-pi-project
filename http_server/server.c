@@ -41,6 +41,8 @@
 #define LED_BLUE 21 // 0/1
 // end of payload
 
+void wait_i2c_done();
+
 struct bcm2835_peripheral {
     off_t addr_p;
     int mem_fd;
@@ -89,35 +91,36 @@ void unmap_peripheral(struct bcm2835_peripheral *p) {
 extern struct bcm2835_peripheral bsc0;
 
 #define LIGHT_SENSOR_ADDRESS 0x23
+#define CONTINUOUS_HIGH_RES_MODE_1 0x10
 
 // I2C macros
-#define BSC0_C          *(bsc0.addr + 0x00)
-#define BSC0_S          *(bsc0.addr + 0x01)
-#define BSC0_DLEN     *(bsc0.addr + 0x02)
-#define BSC0_A          *(bsc0.addr + 0x03)
-#define BSC0_FIFO     *(bsc0.addr + 0x04)
+#define BSC0_C          *(bsc0.addr + 0x00) // control
+#define BSC0_S          *(bsc0.addr + 0x01) // status
+#define BSC0_DLEN     *(bsc0.addr + 0x02) // data length
+#define BSC0_A          *(bsc0.addr + 0x03) // slave address
+#define BSC0_FIFO     *(bsc0.addr + 0x04) // data fifo
 
-#define BSC_C_I2CEN     (1 << 15)
-#define BSC_C_INTR      (1 << 10)
-#define BSC_C_INTT      (1 << 9)
-#define BSC_C_INTD      (1 << 8)
-#define BSC_C_ST        (1 << 7)
-#define BSC_C_CLEAR     (1 << 4)
-#define BSC_C_READ      1
+#define BSC_C_I2CEN     (1 << 15) // I2C enable
+#define BSC_C_INTR      (1 << 10) // INTR Interrupt on RX
+#define BSC_C_INTT      (1 << 9) // INTT Interrupt on TX
+#define BSC_C_INTD      (1 << 8) // INTD Interrupt on DONE
+#define BSC_C_ST        (1 << 7) // Start Transfer
+#define BSC_C_CLEAR     (1 << 4) // CLEAR fifo Clear
+#define BSC_C_READ      1 // READ transfer
 
 #define START_READ      BSC_C_I2CEN|BSC_C_ST|BSC_C_CLEAR|BSC_C_READ
 #define START_WRITE     BSC_C_I2CEN|BSC_C_ST
 
-#define BSC_S_CLKT  (1 << 9)
-#define BSC_S_ERR     (1 << 8)
-#define BSC_S_RXF     (1 << 7)
-#define BSC_S_TXE     (1 << 6)
-#define BSC_S_RXD     (1 << 5)
-#define BSC_S_TXD     (1 << 4)
-#define BSC_S_RXR     (1 << 3)
-#define BSC_S_TXW     (1 << 2)
-#define BSC_S_DONE    (1 << 1)
-#define BSC_S_TA      1
+#define BSC_S_CLKT  (1 << 9) // Clock Stretch Timeout
+#define BSC_S_ERR     (1 << 8) // ACK error
+#define BSC_S_RXF     (1 << 7) // fifo full
+#define BSC_S_TXE     (1 << 6) // fifo empty
+#define BSC_S_RXD     (1 << 5) // fifo contains DATA
+#define BSC_S_TXD     (1 << 4) // fifo can accept data
+#define BSC_S_RXR     (1 << 3) // fifo needs reading
+#define BSC_S_TXW     (1 << 2) // fifo needs writing
+#define BSC_S_DONE    (1 << 1) // transfer done
+#define BSC_S_TA      1 // transfer active
 
 #define CLEAR_STATUS    BSC_S_CLKT|BSC_S_ERR|BSC_S_DONE // czysci status register
 
@@ -132,11 +135,31 @@ void i2c_init() {
     SET_GPIO_ALT(0, 0);
     INP_GPIO(1);
     SET_GPIO_ALT(1, 0);
+
+    while(1) {
+        /*/////////////////*/
+        BSC0_A = LIGHT_SENSOR_ADDRESS;
+        BSC0_DLEN = 2;
+        BSC0_FIFO = CONTINUOUS_HIGH_RES_MODE_1;
+        BSC0_S = CLEAR_STATUS;
+        BSC0_C = START_WRITE;
+
+        wait_i2c_done();
+
+        BSC0_DLEN = 2;
+        BSC0_S = CLEAR_STATUS;
+        BSC0_C = START_READ;
+
+        wait_i2c_done();
+
+        printf("%d", BSC0_FIFO);
+    }
+
+    /*//////////////*/
 }
 
 // czeka az i2c nie powie done
 void wait_i2c_done() {
-
     int timeout = 50;
     while((!((BSC0_S) & BSC_S_DONE)) && --timeout) {
         usleep(1000);
