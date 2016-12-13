@@ -41,6 +41,9 @@
 #define LED_BLUE 21 // 0/1
 // end of payload
 
+#define sda 2
+#define scl 3
+
 void wait_i2c_done();
 
 struct bcm2835_peripheral {
@@ -126,6 +129,73 @@ extern struct bcm2835_peripheral bsc0;
 
 struct bcm2835_peripheral bsc0 = {BSC0_BASE};
 
+
+void delay() {
+    usleep(100);
+}
+
+void send_start() {
+    OUT_GPIO(sda);
+    OUT_GPIO(scl);
+
+    GPIO_SET = 1 << sda;
+    delay();
+    GPIO_SET = 1 << scl;
+    delay();
+    GPIO_CLR = 1 << sda;
+    delay();
+    GPIO_CLR = 1 << scl;
+    delay();
+}
+
+void send_stop() {
+    OUT_GPIO(sda);
+    OUT_GPIO(scl);
+
+    GPIO_CLR = 1 << sda;
+    delay();
+    GPIO_CLR = 1 << sda;
+    delay();
+    GPIO_SET = 1 << scl;
+    delay();
+    GPIO_SET = 1 << sda;
+    delay();
+}
+
+void send_bit(int bit) {
+    if (bit == 1) {
+        GPIO_SET = 1 << sda;
+    } else {
+        GPIO_CLR = 1 << sda;
+    }
+
+    delay();
+
+    INP_GPIO(scl);
+
+    while(GPIO_READ(scl) == 0) {
+        delay();
+    }
+    delay();
+
+    OUT_GPIO(scl);
+    GPIO_CLR = 1 << scl;
+}
+
+int read_bit() {
+    int bit;
+    INP_GPIO(sda);
+    delay();
+    INP_GPIO(scl);
+    while(GPIO_READ(scl) == 0) {
+        delay();
+    }
+
+    bit = GPIO_READ(sda);
+    delay();
+    GPIO_CLR = 1 << scl;
+    return bit;
+}
 // startuje i2c
 void i2c_init() {
     if(map_peripheral(&bsc0) == -1) {
@@ -135,38 +205,53 @@ void i2c_init() {
     SET_GPIO_ALT(0, 0);
     INP_GPIO(1);
     SET_GPIO_ALT(1, 0);
-
-    BSC0_A = LIGHT_SENSOR_ADDRESS;
-
-    BSC0_DLEN = 2;
-    BSC0_FIFO = 0x01;
-    BSC0_S = CLEAR_STATUS;
-    BSC0_C = START_WRITE;
-
-    wait_i2c_done();
-
-    BSC0_DLEN = 2;
-    BSC0_FIFO = 0x10;
-    BSC0_S = CLEAR_STATUS;
-    BSC0_C = START_WRITE;
-
-    wait_i2c_done();
-    printf("init done\n");
-
-    while(1) {
-        /*/////////////////*/
-        BSC0_DLEN = 3;
-        BSC0_S = CLEAR_STATUS;
-        BSC0_C = START_READ;
-
-        wait_i2c_done();
-
-        printf("%d\n", BSC0_FIFO);
-
-        sleep(1);
-    }
-
-    /*//////////////*/
+    send_start();
+    send_bit(0);
+    send_bit(1);
+    send_bit(0);
+    send_bit(0);
+    send_bit(0);
+    send_bit(1);
+    send_bit(1);
+    send_bit(0);
+    printf("ACK %d", read_bit());
+    send_bit(0);
+    send_bit(0);
+    send_bit(1);
+    send_bit(0);
+    send_bit(0);
+    send_bit(0);
+    send_bit(0);
+    send_bit(0);
+    printf("ACK %d", read_bit());
+    send_stop();
+    send_bit(0);
+    send_bit(1);
+    send_bit(0);
+    send_bit(0);
+    send_bit(0);
+    send_bit(1);
+    send_bit(1);
+    send_bit(1);
+    printf("ACK %d", read_bit());
+    printf("B %d", read_bit());
+    printf("B %d", read_bit());
+    printf("B %d", read_bit());
+    printf("B %d", read_bit());
+    printf("B %d", read_bit());
+    printf("B %d", read_bit());
+    printf("B %d", read_bit());
+    printf("B %d", read_bit());
+    send_bit(1);
+    printf("B %d", read_bit());
+    printf("B %d", read_bit());
+    printf("B %d", read_bit());
+    printf("B %d", read_bit());
+    printf("B %d", read_bit());
+    printf("B %d", read_bit());
+    printf("B %d", read_bit());
+    printf("B %d", read_bit());
+    send_stop();
 }
 
 // czeka az i2c nie powie done
