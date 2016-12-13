@@ -83,6 +83,70 @@ void unmap_peripheral(struct bcm2835_peripheral *p) {
 }
 /* ############################################################ */
 
+/* I2C ######################################################## */
+#define BSC0_BASE     (BCM2835_PERI_BASE + 0x205000)  // I2C controller
+
+extern struct bcm2835_peripheral bsc0;
+
+#define LIGHT_SENSOR_ADDRESS 0x23
+
+// I2C macros
+#define BSC0_C          *(bsc0.addr + 0x00)
+#define BSC0_S          *(bsc0.addr + 0x01)
+#define BSC0_DLEN     *(bsc0.addr + 0x02)
+#define BSC0_A          *(bsc0.addr + 0x03)
+#define BSC0_FIFO     *(bsc0.addr + 0x04)
+
+#define BSC_C_I2CEN     (1 << 15)
+#define BSC_C_INTR      (1 << 10)
+#define BSC_C_INTT      (1 << 9)
+#define BSC_C_INTD      (1 << 8)
+#define BSC_C_ST        (1 << 7)
+#define BSC_C_CLEAR     (1 << 4)
+#define BSC_C_READ      1
+
+#define START_READ      BSC_C_I2CEN|BSC_C_ST|BSC_C_CLEAR|BSC_C_READ
+#define START_WRITE     BSC_C_I2CEN|BSC_C_ST
+
+#define BSC_S_CLKT  (1 << 9)
+#define BSC_S_ERR     (1 << 8)
+#define BSC_S_RXF     (1 << 7)
+#define BSC_S_TXE     (1 << 6)
+#define BSC_S_RXD     (1 << 5)
+#define BSC_S_TXD     (1 << 4)
+#define BSC_S_RXR     (1 << 3)
+#define BSC_S_TXW     (1 << 2)
+#define BSC_S_DONE    (1 << 1)
+#define BSC_S_TA      1
+
+#define CLEAR_STATUS    BSC_S_CLKT|BSC_S_ERR|BSC_S_DONE // czysci status register
+
+struct bcm2835_peripheral bsc0 = {BSC0_BASE};
+
+// startuje i2c
+void i2c_init() {
+    if(map_peripheral(&bsc0) == -1) {
+        printf("Failed to map the physical BSC0 (I2C) registers into the virtual memory space.\n");
+    }
+    INP_GPIO(0);
+    SET_GPIO_ALT(0, 0);
+    INP_GPIO(1);
+    SET_GPIO_ALT(1, 0);
+}
+
+// czeka az i2c nie powie done
+void wait_i2c_done() {
+
+    int timeout = 50;
+    while((!((BSC0_S) & BSC_S_DONE)) && --timeout) {
+        usleep(1000);
+    }
+    if(timeout == 0)
+        printf("Error: wait_i2c_done() timeout.\n");
+}
+
+/* ############################################################ */
+
 //definitions
 int get_line_from_socket_to_buffer(int, char *, int);
 void response_file_headers(int);
@@ -397,6 +461,7 @@ int main( int argc, char * argv[] ) {
 
     map_peripheral(&gpio); // mapowanie GPIO
     initialize_ports();
+    i2c_init();
 
     set_sigchld_trap();
 
@@ -417,6 +482,7 @@ int main( int argc, char * argv[] ) {
 
     close(server_socket);
     unmap_peripheral(&gpio);
+    unmap_peripheral(&bsc0);
 
     return 0;
 }
