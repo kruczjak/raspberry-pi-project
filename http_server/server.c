@@ -136,24 +136,34 @@ void i2c_init() {
     INP_GPIO(1);
     SET_GPIO_ALT(1, 0);
 
+    BSC0_A = LIGHT_SENSOR_ADDRESS;
+
+    BSC0_DLEN = 2;
+    BSC0_FIFO = 0x01;
+    BSC0_S = CLEAR_STATUS;
+    BSC0_C = START_WRITE;
+
+    wait_i2c_done();
+
+    BSC0_DLEN = 2;
+    BSC0_FIFO = 0x10;
+    BSC0_S = CLEAR_STATUS;
+    BSC0_C = START_WRITE;
+
+    wait_i2c_done();
+    printf("init done\n");
+
     while(1) {
         /*/////////////////*/
-        BSC0_A = LIGHT_SENSOR_ADDRESS;
-        BSC0_DLEN = 2;
-        BSC0_FIFO = 16;
-        BSC0_S = CLEAR_STATUS;
-        BSC0_C = START_WRITE;
-
-        wait_i2c_done();
-        printf("write done\n");
-
-        BSC0_DLEN = 2;
+        BSC0_DLEN = 3;
         BSC0_S = CLEAR_STATUS;
         BSC0_C = START_READ;
 
         wait_i2c_done();
 
         printf("%d\n", BSC0_FIFO);
+
+        sleep(1);
     }
 
     /*//////////////*/
