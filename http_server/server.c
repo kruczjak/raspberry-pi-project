@@ -140,11 +140,12 @@ void i2c_init() {
         /*/////////////////*/
         BSC0_A = LIGHT_SENSOR_ADDRESS;
         BSC0_DLEN = 2;
-        BSC0_FIFO = CONTINUOUS_HIGH_RES_MODE_1;
+        BSC0_FIFO = 16;
         BSC0_S = CLEAR_STATUS;
         BSC0_C = START_WRITE;
 
         wait_i2c_done();
+        printf("write done\n");
 
         BSC0_DLEN = 2;
         BSC0_S = CLEAR_STATUS;
@@ -152,7 +153,7 @@ void i2c_init() {
 
         wait_i2c_done();
 
-        printf("%d", BSC0_FIFO);
+        printf("%d\n", BSC0_FIFO);
     }
 
     /*//////////////*/
@@ -160,7 +161,7 @@ void i2c_init() {
 
 // czeka az i2c nie powie done
 void wait_i2c_done() {
-    int timeout = 50;
+    int timeout = 450;
     while((!((BSC0_S) & BSC_S_DONE)) && --timeout) {
         usleep(1000);
     }
