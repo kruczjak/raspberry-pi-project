@@ -160,7 +160,7 @@ int clock_read(void) {
     int level; /* state of SDA line */
     GPIO_SET = 1 << scl;
     delay();
-    while(GPIO_READ(scl) == 1); /* if a pulse was stretched */
+    while(GPIO_READ(scl) == 0); /* if a pulse was stretched */
     delay();
     level = GPIO_READ(sda);
     delay();
@@ -177,7 +177,7 @@ int send_byte(int byte) {
             GPIO_SET = 1 << sda;
         else
             GPIO_CLR = 1 << sda;
-        clock();
+        clock_read();
         mask >>= 1; /* next bit to send */
     }
     GPIO_SET = 1 << sda;
@@ -189,20 +189,20 @@ int read_byte(int acknowledgment)
     int mask = 0x80, byte = 0x00;
     while(mask)
     {
-        if (clock())
+        if (clock_read())
             byte |= mask;
         mask >>= 1; /* next bit to receive */
     }
     if (acknowledgment)
     {
         GPIO_CLR = 1 << sda;
-        clock();
+        clock_read();
         GPIO_SET = 1 << sda;
     }
     else
     {
         GPIO_SET = 1 << sda;
-        clock();
+        clock_read();
     }
     return(byte);
 }
