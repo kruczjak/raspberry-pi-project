@@ -214,17 +214,19 @@ void i2c_init() {
     send_bit(0);
     send_bit(1);
     send_bit(0);
-    printf("ACK %d", read_bit());
-    send_bit(0);
+    printf("FIRST ACK %d", read_bit());
     send_bit(0);
     send_bit(0);
     send_bit(0);
     send_bit(0);
     send_bit(1);
+    send_bit(0);
     send_bit(0);
     send_bit(0);
     printf("ACK %d", read_bit());
     send_stop();
+
+    send_start();
     send_bit(1);
     send_bit(1);
     send_bit(1);
@@ -251,6 +253,7 @@ void i2c_init() {
     printf("B %d", read_bit());
     printf("B %d", read_bit());
     printf("B %d", read_bit());
+    send_bit(0);
     send_stop();
 }
 
