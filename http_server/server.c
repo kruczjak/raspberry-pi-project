@@ -88,50 +88,6 @@ void unmap_peripheral(struct bcm2835_peripheral *p) {
 }
 /* ############################################################ */
 
-/* I2C ######################################################## */
-#define BSC0_BASE     (BCM2835_PERI_BASE + 0x205000)  // I2C controller
-
-extern struct bcm2835_peripheral bsc0;
-
-#define LIGHT_SENSOR_ADDRESS 0x23
-#define CONTINUOUS_HIGH_RES_MODE_1 0x10
-#define ACK 0
-#define NACK 1
-
-// I2C macros
-#define BSC0_C          *(bsc0.addr + 0x00) // control
-#define BSC0_S          *(bsc0.addr + 0x01) // status
-#define BSC0_DLEN     *(bsc0.addr + 0x02) // data length
-#define BSC0_A          *(bsc0.addr + 0x03) // slave address
-#define BSC0_FIFO     *(bsc0.addr + 0x04) // data fifo
-
-#define BSC_C_I2CEN     (1 << 15) // I2C enable
-#define BSC_C_INTR      (1 << 10) // INTR Interrupt on RX
-#define BSC_C_INTT      (1 << 9) // INTT Interrupt on TX
-#define BSC_C_INTD      (1 << 8) // INTD Interrupt on DONE
-#define BSC_C_ST        (1 << 7) // Start Transfer
-#define BSC_C_CLEAR     (1 << 4) // CLEAR fifo Clear
-#define BSC_C_READ      1 // READ transfer
-
-#define START_READ      BSC_C_I2CEN|BSC_C_ST|BSC_C_CLEAR|BSC_C_READ
-#define START_WRITE     BSC_C_I2CEN|BSC_C_ST
-
-#define BSC_S_CLKT  (1 << 9) // Clock Stretch Timeout
-#define BSC_S_ERR     (1 << 8) // ACK error
-#define BSC_S_RXF     (1 << 7) // fifo full
-#define BSC_S_TXE     (1 << 6) // fifo empty
-#define BSC_S_RXD     (1 << 5) // fifo contains DATA
-#define BSC_S_TXD     (1 << 4) // fifo can accept data
-#define BSC_S_RXR     (1 << 3) // fifo needs reading
-#define BSC_S_TXW     (1 << 2) // fifo needs writing
-#define BSC_S_DONE    (1 << 1) // transfer done
-#define BSC_S_TA      1 // transfer active
-
-#define CLEAR_STATUS    BSC_S_CLKT|BSC_S_ERR|BSC_S_DONE // czysci status register
-
-struct bcm2835_peripheral bsc0 = {BSC0_BASE};
-
-
 void delay() {
     usleep(100);
 }
@@ -157,12 +113,14 @@ void send_stop() {
 }
 
 int clock_read(void) {
+    printf("CLOCK_READ: reading\n");
     int level; /* state of SDA line */
     GPIO_SET = 1 << scl;
     delay();
     while(GPIO_READ(scl) == 0); /* if a pulse was stretched */
     delay();
     level = GPIO_READ(sda);
+    printf("CLOCK_READ: readed %d\n", level);
     delay();
     GPIO_CLR = 1 << scl;
 
@@ -173,10 +131,13 @@ int clock_read(void) {
 int send_byte(int byte) {
     int mask = 0x80;
     while(mask) {
-        if (byte & mask)
+        if (byte & mask) {
+            printf("SEND_BYTE: 1\n");
             GPIO_SET = 1 << sda;
-        else
+        } else {
+            printf("SEND_BYTE: 0\n");
             GPIO_CLR = 1 << sda;
+        }
         clock_read();
         mask >>= 1; /* next bit to send */
     }
@@ -213,38 +174,26 @@ void i2c_init() {
 //        printf("Failed to map the physical BSC0 (I2C) registers into the virtual memory space.\n");
 //    }
     INP_GPIO(sda);
-    SET_GPIO_ALT(sda, 0);
     INP_GPIO(scl);
-    SET_GPIO_ALT(scl, 0);
-
     OUT_GPIO(sda);
     OUT_GPIO(scl);
+
     send_start();
-    printf("FIRST ACK %d\n", send_byte(0x46));
-    printf("ACK %d\n", send_byte(0x10));
+    printf("!!! FIRST ACK %d\n", send_byte(0x46));
+    printf("!!! ACK %d\n", send_byte(0x10));
     send_stop();
 
     sleep(1);
 
     while (1) {
         send_start();
-        printf("ACK %d\n", send_byte(0x47));
-        printf("byte1: %d\n", read_byte(ACK));
-        printf("byte2: %d\n", read_byte(NACK));
+        printf("!!! ACK %d\n", send_byte(0x47));
+        printf("!!! byte1: %d\n", read_byte(1));
+        printf("!!! byte2: %d\n", read_byte(0));
         send_stop();
 
         sleep(1);
     }
-}
-
-// czeka az i2c nie powie done
-void wait_i2c_done() {
-    int timeout = 450;
-    while((!((BSC0_S) & BSC_S_DONE)) && --timeout) {
-        usleep(1000);
-    }
-    if(timeout == 0)
-        printf("Error: wait_i2c_done() timeout.\n");
 }
 
 /* ############################################################ */
@@ -584,7 +533,6 @@ int main( int argc, char * argv[] ) {
 
     close(server_socket);
     unmap_peripheral(&gpio);
-    unmap_peripheral(&bsc0);
 
     return 0;
 }
