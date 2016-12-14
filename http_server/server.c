@@ -226,11 +226,15 @@ void i2c_init() {
 
     sleep(1);
 
-    send_start();
-    printf("ACK %d\n", send_byte(0x47));
-    printf("byte1: %d\n", read_byte(ACK));
-    printf("byte2: %d\n", read_byte(NACK));
-    send_stop();
+    while (1) {
+        send_start();
+        printf("ACK %d\n", send_byte(0x47));
+        printf("byte1: %d\n", read_byte(ACK));
+        printf("byte2: %d\n", read_byte(NACK));
+        send_stop();
+
+        sleep(1);
+    }
 }
 
 // czeka az i2c nie powie done
