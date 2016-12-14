@@ -188,9 +188,15 @@ int read_bit() {
 
     GPIO_SET = 1 << scl;
     delay();
+    INP_GPIO(scl);
+    while (GPIO_READ(scl) == 0);
+    delay();
     bit = GPIO_READ(sda);
+    OUT_GPIO(scl);
     GPIO_CLR = 1 << scl;
     delay();
+
+    if (bit > 1) bit = 1;
     return bit;
 }
 // startuje i2c
