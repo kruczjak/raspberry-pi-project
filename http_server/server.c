@@ -95,6 +95,8 @@ extern struct bcm2835_peripheral bsc0;
 
 #define LIGHT_SENSOR_ADDRESS 0x23
 #define CONTINUOUS_HIGH_RES_MODE_1 0x10
+#define ACK 0
+#define NACK 1
 
 // I2C macros
 #define BSC0_C          *(bsc0.addr + 0x00) // control
@@ -136,7 +138,6 @@ void delay() {
 
 void send_start() {
     OUT_GPIO(sda);
-    OUT_GPIO(scl);
 
     GPIO_SET = 1 << sda;
     delay();
@@ -150,7 +151,6 @@ void send_start() {
 
 void send_stop() {
     OUT_GPIO(sda);
-    OUT_GPIO(scl);
 
     GPIO_CLR = 1 << sda;
     delay();
@@ -182,12 +182,12 @@ void send_bit(int bit) {
 int read_bit() {
     int bit;
     INP_GPIO(sda);
-    delay();
+
     GPIO_SET = 1 << scl;
     delay();
     bit = GPIO_READ(sda);
-    delay();
     GPIO_CLR = 1 << scl;
+    delay();
     return bit;
 }
 // startuje i2c
@@ -199,6 +199,7 @@ void i2c_init() {
     SET_GPIO_ALT(sda, 0);
     INP_GPIO(scl);
     SET_GPIO_ALT(scl, 0);
+    OUT_GPIO(scl);
     send_start();
     send_bit(0);
     send_bit(1);
@@ -250,7 +251,7 @@ void i2c_init() {
     printf("%d", read_bit());
     printf("%d", read_bit());
     printf("%d", read_bit());
-    send_bit(0); // ack
+    send_bit(ACK); // ack
     printf("%d", read_bit());
     printf("%d", read_bit());
     printf("%d", read_bit());
@@ -259,7 +260,7 @@ void i2c_init() {
     printf("%d", read_bit());
     printf("%d", read_bit());
     printf("%d", read_bit());
-    send_bit(1); //nack
+    send_bit(NACK); //nack
     send_stop();
 }
 
