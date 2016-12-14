@@ -131,7 +131,7 @@ struct bcm2835_peripheral bsc0 = {BSC0_BASE};
 
 
 void delay() {
-    usleep(100);
+    usleep(50);
 }
 
 void send_start() {
@@ -201,10 +201,10 @@ void i2c_init() {
 //    if(map_peripheral(&bsc0) == -1) {
 //        printf("Failed to map the physical BSC0 (I2C) registers into the virtual memory space.\n");
 //    }
-    INP_GPIO(0);
-    SET_GPIO_ALT(0, 0);
-    INP_GPIO(1);
-    SET_GPIO_ALT(1, 0);
+    INP_GPIO(sda);
+    SET_GPIO_ALT(sda, 0);
+    INP_GPIO(scl);
+    SET_GPIO_ALT(scl, 0);
     send_start();
     send_bit(0);
     send_bit(1);
@@ -213,7 +213,7 @@ void i2c_init() {
     send_bit(0);
     send_bit(1);
     send_bit(1);
-    send_bit(0);
+    send_bit(0); //r/w
 
 //    send_bit(0);
 //    send_bit(1);
@@ -232,9 +232,11 @@ void i2c_init() {
     send_bit(0);
     send_bit(0);
     send_bit(0);
-    send_bit(0);
+    send_bit(1);
     printf("ACK %d\n", read_bit());
     send_stop();
+    printf("STOPPING WRITE\n");
+
     sleep(1);
     send_start();
     send_bit(0);
@@ -244,26 +246,26 @@ void i2c_init() {
     send_bit(0);
     send_bit(1);
     send_bit(1);
-    send_bit(1);
+    send_bit(1); // r/w
     printf("ACK %d\n", read_bit());
-    printf("B %d", read_bit());
-    printf("B %d", read_bit());
-    printf("B %d", read_bit());
-    printf("B %d", read_bit());
-    printf("B %d", read_bit());
-    printf("B %d", read_bit());
-    printf("B %d", read_bit());
-    printf("B %d", read_bit());
-    send_bit(1);
-    printf("B %d", read_bit());
-    printf("B %d", read_bit());
-    printf("B %d", read_bit());
-    printf("B %d", read_bit());
-    printf("B %d", read_bit());
-    printf("B %d", read_bit());
-    printf("B %d", read_bit());
-    printf("B %d", read_bit());
-    send_bit(0);
+    printf("%d", read_bit());
+    printf("%d", read_bit());
+    printf("%d", read_bit());
+    printf("%d", read_bit());
+    printf("%d", read_bit());
+    printf("%d", read_bit());
+    printf("%d", read_bit());
+    printf("%d", read_bit());
+    send_bit(0); // ack
+    printf("%d", read_bit());
+    printf("%d", read_bit());
+    printf("%d", read_bit());
+    printf("%d", read_bit());
+    printf("%d", read_bit());
+    printf("%d", read_bit());
+    printf("%d", read_bit());
+    printf("%d", read_bit());
+    send_bit(1); //nack
     send_stop();
 }
 
