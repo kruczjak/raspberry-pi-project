@@ -165,6 +165,8 @@ int clock_read(void) {
     level = GPIO_READ(sda);
     delay();
     GPIO_CLR = 1 << scl;
+
+    if (level > 1) level = 1;
     return(level);
 }
 
@@ -218,8 +220,8 @@ void i2c_init() {
     OUT_GPIO(sda);
     OUT_GPIO(scl);
     send_start();
-    printf("FIRST ACK %d\n", send_byte(0x23));
-    printf("ACK %d\n", send_byte(0x11));
+    printf("FIRST ACK %d\n", send_byte(0x46));
+    printf("ACK %d\n", send_byte(0x10));
     send_stop();
 
     sleep(1);
