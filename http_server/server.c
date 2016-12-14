@@ -168,38 +168,43 @@ int clock_read(void) {
     return(level);
 }
 
-void send_bit(int bit) {
-    if (bit == 1) {
-        GPIO_SET = 1 << sda;
-    } else {
-        GPIO_CLR = 1 << sda;
+int send_byte(int byte) {
+    int mask = 0x80;
+    while(mask) {
+        if (byte & mask)
+            GPIO_SET = 1 << sda;
+        else
+            GPIO_CLR = 1 << sda;
+        clock();
+        mask >>= 1; /* next bit to send */
     }
-
-    delay();
-
-    GPIO_SET = 1 << scl;
-    delay();
-    GPIO_CLR = 1 << scl;
-    delay();
-    GPIO_CLR = 1 << sda;
-    delay();
+    GPIO_SET = 1 << sda;
+    return(clock_read()); /* a slave should acknowledge */
 }
 
-int read_bit() {
-    int bit;
-
-    GPIO_SET = 1 << scl;
-    delay();
-    while (GPIO_READ(scl) == 0);
-    delay();
-    bit = GPIO_READ(sda);
-    OUT_GPIO(scl);
-    GPIO_CLR = 1 << scl;
-    delay();
-
-    if (bit > 1) bit = 1;
-    return bit;
+int read_byte(int acknowledgment)
+{
+    int mask = 0x80, byte = 0x00;
+    while(mask)
+    {
+        if (clock())
+            byte |= mask;
+        mask >>= 1; /* next bit to receive */
+    }
+    if (acknowledgment)
+    {
+        GPIO_CLR = 1 << sda;
+        clock();
+        GPIO_SET = 1 << sda;
+    }
+    else
+    {
+        GPIO_SET = 1 << sda;
+        clock();
+    }
+    return(byte);
 }
+
 // startuje i2c
 void i2c_init() {
 //    if(map_peripheral(&bsc0) == -1) {
@@ -213,57 +218,16 @@ void i2c_init() {
     OUT_GPIO(sda);
     OUT_GPIO(scl);
     send_start();
-    send_bit(0);
-    send_bit(1);
-    send_bit(0);
-    send_bit(0);
-    send_bit(0);
-    send_bit(1);
-    send_bit(1);
-    send_bit(0); //r/w
-    printf("FIRST ACK %d\n", read_bit());
-
-    send_bit(0);
-    send_bit(0);
-    send_bit(0);
-    send_bit(1);
-    send_bit(0);
-    send_bit(0);
-    send_bit(0);
-    send_bit(1);
-    printf("ACK %d\n", read_bit());
+    printf("FIRST ACK %d\n", send_byte(0x23));
+    printf("ACK %d\n", send_byte(0x11));
     send_stop();
-    printf("STOPPING WRITE\n");
 
     sleep(1);
+
     send_start();
-    send_bit(0);
-    send_bit(1);
-    send_bit(0);
-    send_bit(0);
-    send_bit(0);
-    send_bit(1);
-    send_bit(1);
-    send_bit(1); // r/w
-    printf("ACK %d\n", read_bit());
-    printf("%d", read_bit());
-    printf("%d", read_bit());
-    printf("%d", read_bit());
-    printf("%d", read_bit());
-    printf("%d", read_bit());
-    printf("%d", read_bit());
-    printf("%d", read_bit());
-    printf("%d", read_bit());
-    send_bit(ACK); // ack
-    printf("%d", read_bit());
-    printf("%d", read_bit());
-    printf("%d", read_bit());
-    printf("%d", read_bit());
-    printf("%d", read_bit());
-    printf("%d", read_bit());
-    printf("%d", read_bit());
-    printf("%d", read_bit());
-    send_bit(NACK); //nack
+    printf("ACK %d\n", send_byte(0x47));
+    printf("byte1: %d\n", read_byte(ACK));
+    printf("byte2: %d\n", read_byte(NACK));
     send_stop();
 }
 
