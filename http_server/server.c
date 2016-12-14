@@ -133,13 +133,10 @@ struct bcm2835_peripheral bsc0 = {BSC0_BASE};
 
 
 void delay() {
-    usleep(50);
+    usleep(100);
 }
 
 void send_start() {
-    INP_GPIO(sda);
-    OUT_GPIO(sda);
-
     GPIO_SET = 1 << sda;
     delay();
     GPIO_SET = 1 << scl;
@@ -151,9 +148,6 @@ void send_start() {
 }
 
 void send_stop() {
-    INP_GPIO(sda);
-    OUT_GPIO(sda);
-
     GPIO_CLR = 1 << sda;
     delay();
     GPIO_SET = 1 << scl;
@@ -162,10 +156,19 @@ void send_stop() {
     delay();
 }
 
-void send_bit(int bit) {
-    INP_GPIO(sda);
-    OUT_GPIO(sda);
+int clock_read(void) {
+    int level; /* state of SDA line */
+    GPIO_SET = 1 << scl;
+    delay();
+    while(GPIO_READ(scl) == 1); /* if a pulse was stretched */
+    delay();
+    level = GPIO_READ(sda);
+    delay();
+    GPIO_CLR = 1 << scl;
+    return(level);
+}
 
+void send_bit(int bit) {
     if (bit == 1) {
         GPIO_SET = 1 << sda;
     } else {
@@ -184,11 +187,9 @@ void send_bit(int bit) {
 
 int read_bit() {
     int bit;
-    INP_GPIO(sda);
 
     GPIO_SET = 1 << scl;
     delay();
-    INP_GPIO(scl);
     while (GPIO_READ(scl) == 0);
     delay();
     bit = GPIO_READ(sda);
@@ -208,6 +209,8 @@ void i2c_init() {
     SET_GPIO_ALT(sda, 0);
     INP_GPIO(scl);
     SET_GPIO_ALT(scl, 0);
+
+    OUT_GPIO(sda);
     OUT_GPIO(scl);
     send_start();
     send_bit(0);
