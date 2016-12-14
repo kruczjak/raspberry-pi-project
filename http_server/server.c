@@ -198,13 +198,13 @@ int read_bit() {
 }
 // startuje i2c
 void i2c_init() {
-    if(map_peripheral(&bsc0) == -1) {
-        printf("Failed to map the physical BSC0 (I2C) registers into the virtual memory space.\n");
-    }
-//    INP_GPIO(0);
-//    SET_GPIO_ALT(0, 0);
-//    INP_GPIO(1);
-//    SET_GPIO_ALT(1, 0);
+//    if(map_peripheral(&bsc0) == -1) {
+//        printf("Failed to map the physical BSC0 (I2C) registers into the virtual memory space.\n");
+//    }
+    INP_GPIO(0);
+    SET_GPIO_ALT(0, 0);
+    INP_GPIO(1);
+    SET_GPIO_ALT(1, 0);
     send_start();
     send_bit(0);
     send_bit(1);
