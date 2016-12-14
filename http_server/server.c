@@ -137,6 +137,7 @@ void delay() {
 }
 
 void send_start() {
+    INP_GPIO(sda);
     OUT_GPIO(sda);
 
     GPIO_SET = 1 << sda;
@@ -150,6 +151,7 @@ void send_start() {
 }
 
 void send_stop() {
+    INP_GPIO(sda);
     OUT_GPIO(sda);
 
     GPIO_CLR = 1 << sda;
@@ -161,6 +163,7 @@ void send_stop() {
 }
 
 void send_bit(int bit) {
+    INP_GPIO(sda);
     OUT_GPIO(sda);
 
     if (bit == 1) {
@@ -209,15 +212,6 @@ void i2c_init() {
     send_bit(1);
     send_bit(1);
     send_bit(0); //r/w
-
-//    send_bit(0);
-//    send_bit(1);
-//    send_bit(1);
-//    send_bit(0);
-//    send_bit(0);
-//    send_bit(0);
-//    send_bit(1);
-//    send_bit(0);
     printf("FIRST ACK %d\n", read_bit());
 
     send_bit(0);
