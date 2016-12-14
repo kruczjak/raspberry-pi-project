@@ -154,8 +154,6 @@ void send_stop() {
 
     GPIO_CLR = 1 << sda;
     delay();
-    GPIO_CLR = 1 << sda;
-    delay();
     GPIO_SET = 1 << scl;
     delay();
     GPIO_SET = 1 << sda;
@@ -163,6 +161,8 @@ void send_stop() {
 }
 
 void send_bit(int bit) {
+    OUT_GPIO(sda);
+
     if (bit == 1) {
         GPIO_SET = 1 << sda;
     } else {
@@ -171,26 +171,20 @@ void send_bit(int bit) {
 
     delay();
 
-    INP_GPIO(scl);
-
-    while(GPIO_READ(scl) == 0) {
-        delay();
-    }
+    GPIO_SET = 1 << scl;
     delay();
-
-    OUT_GPIO(scl);
     GPIO_CLR = 1 << scl;
+    delay();
+    GPIO_CLR = 1 << sda;
+    delay();
 }
 
 int read_bit() {
     int bit;
     INP_GPIO(sda);
     delay();
-    INP_GPIO(scl);
-    while(GPIO_READ(scl) == 0) {
-        delay();
-    }
-
+    GPIO_SET = 1 << scl;
+    delay();
     bit = GPIO_READ(sda);
     delay();
     GPIO_CLR = 1 << scl;
