@@ -191,7 +191,7 @@ void i2c_init() {
         printf("!!! byte2: %d\n", lowByte);
         send_stop();
 
-        int value = highByte << lowByte;
+        int value = (highByte << 8) | lowByte;
         int lux = (int) (value / 1.2);
         printf("!!!luxes: %d\n", lux);
 
