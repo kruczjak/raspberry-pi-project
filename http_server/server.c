@@ -191,6 +191,8 @@ int readLuxes() {
     int value = (highByte << 8) | lowByte;
     int lux = (int) (value / 1.2);
     printf("!!!luxes: %d\n", lux);
+
+    return lux;
 }
 /* ############################################################ */
 
