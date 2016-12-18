@@ -91,38 +91,38 @@ void unmap_peripheral(struct bcm2835_peripheral *p) {
 void delay() {
     usleep(100);
 }
-
+ // inp == 1
 void send_start() {
-    GPIO_SET = 1 << sda;
+    INP_GPIO(sda);
     delay();
-    GPIO_SET = 1 << scl;
+    INP_GPIO(scl);
     delay();
-    GPIO_CLR = 1 << sda;
+    OUT_GPIO(sda);
     delay();
-    GPIO_CLR = 1 << scl;
+    OUT_GPIO(scl);
     delay();
 }
 
 void send_stop() {
-    GPIO_CLR = 1 << sda;
+    OUT_GPIO(sda);
     delay();
-    GPIO_SET = 1 << scl;
+    INP_GPIO(scl);
     delay();
-    GPIO_SET = 1 << sda;
+    INP_GPIO(sda);
     delay();
 }
 
 int clock_read(void) {
     printf("CLOCK_READ: reading\n");
     int level; /* state of SDA line */
-    GPIO_SET = 1 << scl;
+    INP_GPIO(scl);
     delay();
     while(GPIO_READ(scl) == 0); /* if a pulse was stretched */
     delay();
     level = GPIO_READ(sda);
     printf("CLOCK_READ: readed %d\n", level);
     delay();
-    GPIO_CLR = 1 << scl;
+    OUT_GPIO(scl);
 
     if (level > 1) level = 1;
     return(level);
@@ -133,15 +133,15 @@ int send_byte(int byte) {
     while(mask) {
         if (byte & mask) {
             printf("SEND_BYTE: 1\n");
-            GPIO_SET = 1 << sda;
+            INP_GPIO(sda);
         } else {
             printf("SEND_BYTE: 0\n");
-            GPIO_CLR = 1 << sda;
+            OUT_GPIO(sda);
         }
         clock_read();
         mask >>= 1; /* next bit to send */
     }
-    GPIO_SET = 1 << sda;
+    INP_GPIO(sda);
     return(clock_read()); /* a slave should acknowledge */
 }
 
@@ -156,13 +156,13 @@ int read_byte(int acknowledgment)
     }
     if (acknowledgment)
     {
-        GPIO_CLR = 1 << sda;
+        OUT_GPIO(sda);
         clock_read();
-        GPIO_SET = 1 << sda;
+        INP_GPIO(sda);
     }
     else
     {
-        GPIO_SET = 1 << sda;
+        INP_GPIO(sda);
         clock_read();
     }
     return(byte);
@@ -173,10 +173,10 @@ void i2c_init() {
 //    if(map_peripheral(&bsc0) == -1) {
 //        printf("Failed to map the physical BSC0 (I2C) registers into the virtual memory space.\n");
 //    }
-    INP_GPIO(sda);
-    INP_GPIO(scl);
     OUT_GPIO(sda);
     OUT_GPIO(scl);
+    GPIO_CLR = 1 << sda;
+    GPIO_CLR = 1 << scl;
 
     send_start();
     printf("!!! FIRST ACK %d\n", send_byte(0x46));
