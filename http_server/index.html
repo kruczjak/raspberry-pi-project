@@ -19,6 +19,8 @@
 
     <button type="submit" id="send">Send</button>
   </form>
+  <br/>
+  <div>Ilość światła: <span id="lux_value"></span></div>
 
   <div style="text-align: right;">by Jakub Kruczek</div>
 </body>
@@ -43,10 +45,16 @@
       return payload;
     }
 
-    $.get('/?gpio', function(data) {
+    $.get('/?leds', function(data) {
       $('#led_red').prop("checked", data[0] === '1');
       $('#led_green').prop("checked", data[1] === '1');
       $('#led_blue').prop("checked", data[2] === '1');
     });
+
+    setInterval(function(){
+      $.get('/?light', function(data) {
+        $('#lux_value').text(data);
+      });
+    }, 500);
   </script>
 </html>
