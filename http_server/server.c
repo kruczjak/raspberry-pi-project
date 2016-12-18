@@ -43,6 +43,7 @@
 
 #define sda 2
 #define scl 3
+#define I2C_DELAY 100
 
 void wait_i2c_done();
 
@@ -87,11 +88,13 @@ void unmap_peripheral(struct bcm2835_peripheral *p) {
     close(p->mem_fd);
 }
 /* ############################################################ */
+// input state == 1
+// output state == 0
 
 void delay() {
-    usleep(100);
+    usleep(I2C_DELAY);
 }
- // inp == 1
+
 void send_start() {
     INP_GPIO(sda);
     delay();
@@ -114,10 +117,10 @@ void send_stop() {
 
 int clock_read(void) {
     printf("CLOCK_READ: reading\n");
-    int level; /* state of SDA line */
+    int level;
     INP_GPIO(scl);
     delay();
-    while(GPIO_READ(scl) == 0); /* if a pulse was stretched */
+    while(GPIO_READ(scl) == 0);
     delay();
     level = GPIO_READ(sda);
     printf("CLOCK_READ: readed %d\n", level);
@@ -139,29 +142,24 @@ int send_byte(int byte) {
             OUT_GPIO(sda);
         }
         clock_read();
-        mask >>= 1; /* next bit to send */
+        mask >>= 1;
     }
     INP_GPIO(sda);
-    return(clock_read()); /* a slave should acknowledge */
+    return(clock_read());
 }
 
 int read_byte(int acknowledgment)
 {
     int mask = 0x80, byte = 0x00;
-    while(mask)
-    {
-        if (clock_read())
-            byte |= mask;
-        mask >>= 1; /* next bit to receive */
+    while(mask) {
+        if (clock_read()) byte |= mask;
+        mask >>= 1;
     }
-    if (acknowledgment)
-    {
+    if (acknowledgment) {
         OUT_GPIO(sda);
         clock_read();
         INP_GPIO(sda);
-    }
-    else
-    {
+    } else {
         INP_GPIO(sda);
         clock_read();
     }
@@ -179,26 +177,21 @@ void i2c_init() {
     printf("!!! FIRST ACK %d\n", send_byte(0x46));
     printf("!!! ACK %d\n", send_byte(0x10));
     send_stop();
-
-    sleep(1);
-
-    while (1) {
-        send_start();
-        printf("!!! ACK %d\n", send_byte(0x47));
-        int highByte = read_byte(1);
-        printf("!!! byte1: %d\n", highByte);
-        int lowByte = read_byte(0);
-        printf("!!! byte2: %d\n", lowByte);
-        send_stop();
-
-        int value = (highByte << 8) | lowByte;
-        int lux = (int) (value / 1.2);
-        printf("!!!luxes: %d\n", lux);
-
-        sleep(1);
-    }
 }
 
+int readLuxes() {
+    send_start();
+    printf("!!! ACK %d\n", send_byte(0x47));
+    int highByte = read_byte(1);
+    printf("!!! byte1: %d\n", highByte);
+    int lowByte = read_byte(0);
+    printf("!!! byte2: %d\n", lowByte);
+    send_stop();
+
+    int value = (highByte << 8) | lowByte;
+    int lux = (int) (value / 1.2);
+    printf("!!!luxes: %d\n", lux);
+}
 /* ############################################################ */
 
 //definitions
@@ -216,6 +209,8 @@ void disable_port(unsigned int);
 void init_output(unsigned int);
 void init_input(unsigned int);
 void render_gpio(int);
+void render_luxes(int);
+void write_simple_headers(int);
 char get_simple_state(unsigned int);
 
 void sigchld_handler(int s) {
@@ -347,7 +342,8 @@ void accept_client_request(int client) {
     // GET przetwarzanie
     if (strcasecmp(request_type, "GET") == 0) {
         if (strcasecmp(query_string, "") == 0) return render_index(client);
-        if (strcasecmp(query_string, "?gpio") == 0) return render_gpio(client);
+        if (strcasecmp(query_string, "?leds") == 0) return render_gpio(client);
+        if (strcasecmp(query_string, "?light") == 0) return render_luxes(client);
         // GET with query string
 
     }
@@ -397,14 +393,7 @@ void render_index(int client) {
 
 void render_gpio(int client) {
     printf("DEBUG: Rendering GPIO\r\n");
-    int number_of_chars = 1;
     char buffer[1024];
-    buffer[0] = 'A';
-    buffer[1] = END_OF_LINE;
-
-    while ((number_of_chars > 0) && strcmp("\n", buffer)) {
-        number_of_chars = get_line_from_socket_to_buffer(client, buffer, sizeof(buffer));
-    }
 
     buffer[0] = END_OF_LINE;
 
@@ -412,14 +401,7 @@ void render_gpio(int client) {
     printf("LED_GREEN state: %u\r\n", GPIO_READ(LED_GREEN));
     printf("LED_BLUE state: %u\r\n", GPIO_READ(LED_BLUE));
 
-    strcpy(buffer, "HTTP/1.0 200 OK\r\n");
-    send(client, buffer, strlen(buffer), 0);
-    strcpy(buffer, SERVER_NAME);
-    send(client, buffer, strlen(buffer), 0);
-    sprintf(buffer, "Content-Type: text/html; charset=UTF-8\r\n");
-    send(client, buffer, strlen(buffer), 0);
-    strcpy(buffer, "\r\n");
-    send(client, buffer, strlen(buffer), 0);
+    write_simple_headers(client);
 
     buffer[0] = get_simple_state(LED_RED);
     buffer[1] = END_OF_LINE;
@@ -438,6 +420,43 @@ void render_gpio(int client) {
 
     fflush(stdout);
     close(client);
+}
+
+void render_luxes(int client) {
+    printf("DEBUG: Rendering luxes\r\n");
+    char buffer[1024];
+    buffer[0] = END_OF_LINE;
+    write_simple_headers(client);
+
+    int luxes = readLuxes();
+    char str[15];
+    sprintf(str, "%d", luxes);
+    strcpy(buffer, str);
+    strcpy(buffer, "\r\n");
+    send(client, buffer, strlen(buffer), 0);
+    strcpy(buffer, "\r\n");
+    send(client, buffer, strlen(buffer), 0);
+}
+
+void write_simple_headers(int client) {
+    char buffer[1024];
+    int number_of_chars = 0;
+    buffer[0] = 'A';
+    buffer[1] = END_OF_LINE;
+
+    while ((number_of_chars > 0) && strcmp("\n", buffer)) {
+        number_of_chars = get_line_from_socket_to_buffer(client, buffer, sizeof(buffer));
+    }
+    buffer[0] = END_OF_LINE;
+
+    strcpy(buffer, "HTTP/1.0 200 OK\r\n");
+    send(client, buffer, strlen(buffer), 0);
+    strcpy(buffer, SERVER_NAME);
+    send(client, buffer, strlen(buffer), 0);
+    sprintf(buffer, "Content-Type: text/html; charset=UTF-8\r\n");
+    send(client, buffer, strlen(buffer), 0);
+    strcpy(buffer, "\r\n");
+    send(client, buffer, strlen(buffer), 0);
 }
 
 char get_simple_state(unsigned int port_number) {
