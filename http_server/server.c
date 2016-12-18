@@ -396,32 +396,19 @@ void render_index(int client) {
 void render_gpio(int client) {
     printf("DEBUG: Rendering GPIO\r\n");
     char buffer[1024];
-    int number_of_chars = 0;
-    buffer[0] = 'A';
-    buffer[1] = END_OF_LINE;
 
-    while ((number_of_chars > 0) && strcmp("\n", buffer)) {
-        number_of_chars = get_line_from_socket_to_buffer(client, buffer, sizeof(buffer));
-    }
     buffer[0] = END_OF_LINE;
 
     printf("LED_RED state: %u\r\n", GPIO_READ(LED_RED));
     printf("LED_GREEN state: %u\r\n", GPIO_READ(LED_GREEN));
     printf("LED_BLUE state: %u\r\n", GPIO_READ(LED_BLUE));
 
-    strcpy(buffer, "HTTP/1.0 200 OK\r\n");
-    send(client, buffer, strlen(buffer), 0);
-    strcpy(buffer, SERVER_NAME);
-    send(client, buffer, strlen(buffer), 0);
-    sprintf(buffer, "Content-Type: text/html; charset=UTF-8\r\n");
-    send(client, buffer, strlen(buffer), 0);
-    strcpy(buffer, "\r\n");
-    send(client, buffer, strlen(buffer), 0);
+    write_simple_headers(client);
 
     buffer[0] = get_simple_state(LED_RED);
     buffer[1] = END_OF_LINE;
     send(client, buffer, strlen(buffer), 0);
-    
+
     buffer[0] = get_simple_state(LED_GREEN);
     buffer[1] = END_OF_LINE;
     send(client, buffer, strlen(buffer), 0);
@@ -451,11 +438,14 @@ void render_luxes(int client) {
     send(client, buffer, strlen(buffer), 0);
     strcpy(buffer, "\r\n");
     send(client, buffer, strlen(buffer), 0);
+
+    fflush(stdout);
+    close(client);
 }
 
 void write_simple_headers(int client) {
     char buffer[1024];
-    int number_of_chars = 0;
+    int number_of_chars = 1;
     buffer[0] = 'A';
     buffer[1] = END_OF_LINE;
 
