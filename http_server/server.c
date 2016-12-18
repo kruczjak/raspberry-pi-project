@@ -170,9 +170,6 @@ int read_byte(int acknowledgment)
 
 // startuje i2c
 void i2c_init() {
-//    if(map_peripheral(&bsc0) == -1) {
-//        printf("Failed to map the physical BSC0 (I2C) registers into the virtual memory space.\n");
-//    }
     OUT_GPIO(sda);
     OUT_GPIO(scl);
     GPIO_CLR = 1 << sda;
@@ -188,9 +185,15 @@ void i2c_init() {
     while (1) {
         send_start();
         printf("!!! ACK %d\n", send_byte(0x47));
-        printf("!!! byte1: %d\n", read_byte(1));
-        printf("!!! byte2: %d\n", read_byte(0));
+        int highByte = read_byte(1);
+        printf("!!! byte1: %d\n", highByte);
+        int lowByte = read_byte(0);
+        printf("!!! byte2: %d\n", lowByte);
         send_stop();
+
+        int value = highByte << lowByte;
+        int lux = (int) (value / 1.2);
+        printf("!!!luxes: %d\n", lux);
 
         sleep(1);
     }
