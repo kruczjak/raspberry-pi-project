@@ -434,6 +434,7 @@ void render_luxes(int client) {
     char str[15];
     sprintf(str, "%d", luxes);
     strcpy(buffer, str);
+    send(client, buffer, strlen(buffer), 0);
     strcpy(buffer, "\r\n");
     send(client, buffer, strlen(buffer), 0);
     strcpy(buffer, "\r\n");
