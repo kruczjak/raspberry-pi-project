@@ -45,7 +45,21 @@
 #define scl 3
 #define I2C_DELAY 100
 
-void wait_i2c_done();
+/* 1-wire ##################################################### */
+
+#define ONE_WIRE_PORT 4
+#define A_DELAY 6
+#define B_DELAY 64
+#define C_DELAY 60
+#define D_DELAY 10
+#define E_DELAY 9
+#define F_DELAY 55
+#define G_DELAY 0
+#define H_DELAY 70
+#define I_DELAY 70
+#define J_DELAY 40
+
+/* ############################################################ */
 
 struct bcm2835_peripheral {
     off_t addr_p;
@@ -195,6 +209,81 @@ int readLuxes() {
     return lux;
 }
 /* ############################################################ */
+
+/* one_wire */
+
+int one_wire_reset() {
+    usleep(G_DELAY);
+    OUT_GPIO(ONE_WIRE_PORT);
+    usleep(H_DELAY);
+    INP_GPIO(ONE_WIRE_PORT);
+    usleep(I_DELAY);
+    int result = GPIO_READ(ONE_WIRE_PORT) ^ 0x01;
+    usleep(J_DELAY);
+
+    return result;
+}
+
+void one_wire_write_bit(int bit) {
+    if (bit) {
+        // write '1' bit
+        OUT_GPIO(ONE_WIRE_PORT);
+        usleep(A_DELAY);
+        INP_GPIO(ONE_WIRE_PORT);
+        usleep(B_DELAY);
+    } else {
+        // write '0' bit
+        OUT_GPIO(ONE_WIRE_PORT);
+        usleep(C_DELAY);
+        INP_GPIO(ONE_WIRE_PORT);
+        usleep(D_DELAY);
+    }
+}
+
+int one_wire_read_bit() {
+    OUT_GPIO(ONE_WIRE_PORT);
+    usleep(A_DELAY);
+    INP_GPIO(ONE_WIRE_PORT);
+    usleep(E_DELAY);
+    int result = GPIO_READ(ONE_WIRE_PORT) & 0x01;
+    usleep(F_DELAY);
+
+    return result;
+}
+
+void one_wire_write_byte(int data) {
+    for (int loop = 0; loop < 8; loop++) {
+        one_wire_write_bit(data & 0x01);
+        data >>= 1;
+    }
+}
+
+int one_wire_read_byte() {
+    int result = 0;
+
+    for (int loop = 0; loop < 8; loop++) {
+        result >>= 1;
+        if (one_wire_read_bit()) result |= 0x80;
+    }
+
+    return result;
+}
+
+void one_wire_init() {
+    OUT_GPIO(ONE_WIRE_PORT);
+    GPIO_CLR = 1 << ONE_WIRE_PORT;
+
+    if (one_wire_reset()) {
+        printf("DEBUG: NO DEVICES FOUND!");
+        return;
+    }
+
+    one_wire_write_byte(0xCC); // skip ROM command
+    one_wire_write_byte(0xBE); // read scratchpad command
+    for (int i = 0; i < 9; i++) printf("%d", one_wire_read_byte());
+}
+
+/* one_wire */
 
 //definitions
 int get_line_from_socket_to_buffer(int, char *, int);
@@ -540,6 +629,7 @@ int main( int argc, char * argv[] ) {
 
     map_peripheral(&gpio); // mapowanie GPIO
     initialize_ports();
+    one_wire_init();
     i2c_init();
 
     set_sigchld_trap();
