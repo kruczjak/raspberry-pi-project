@@ -270,18 +270,18 @@ int one_wire_read_byte() {
 }
 
 void one_wire_init() {
-    OUT_GPIO(ONE_WIRE_PORT);
-    GPIO_CLR = 1 << ONE_WIRE_PORT;
     INP_GPIO(ONE_WIRE_PORT); // stan wysoki
 
     if (one_wire_reset()) {
         printf("DEBUG: NO DEVICES FOUND!");
-        return;
+        exit(1);
     }
 
     one_wire_write_byte(0xCC); // skip ROM command
     one_wire_write_byte(0xBE); // read scratchpad command
     for (int i = 0; i < 9; i++) printf("%d", one_wire_read_byte());
+
+    exit(0);
 }
 
 /* one_wire */
