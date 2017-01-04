@@ -328,8 +328,8 @@ void one_wire_init() {
     }
     one_wire_write_byte(0xCC); // skip ROM command
     one_wire_write_byte(0xBE); // read scratchpad command
-    int high_byte_lsb = one_wire_read_byte();
     int low_byte_msb = one_wire_read_byte();
+    int high_byte_lsb = one_wire_read_byte();
 
     for (int i = 0; i < 7; i++) printf("%d\n", one_wire_read_byte());
 
