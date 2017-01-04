@@ -55,7 +55,7 @@
 #define E_DELAY 9
 #define F_DELAY 55
 #define G_DELAY 0
-#define H_DELAY 70
+#define H_DELAY 480
 #define I_DELAY 70
 #define J_DELAY 40
 
@@ -277,7 +277,7 @@ void one_wire_init() {
     INP_GPIO(ONE_WIRE_PORT); // stan wysoki
 
     if (one_wire_reset()) {
-        printf("DEBUG: NO DEVICES FOUND!");
+        printf("DEBUG: NO DEVICES FOUND!\n");
         exit(1);
     }
 
