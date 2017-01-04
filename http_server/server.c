@@ -213,7 +213,6 @@ int readLuxes() {
 /* one_wire */
 
 int one_wire_reset() {
-    usleep(1000);
     usleep(G_DELAY);
     OUT_GPIO(ONE_WIRE_PORT);
     usleep(H_DELAY);
@@ -222,7 +221,7 @@ int one_wire_reset() {
     int result = GPIO_READ(ONE_WIRE_PORT);
     usleep(J_DELAY);
     if (result > 1) result = 1;
-    printf("DEBUG: RESET RESPONSE: %d", result);
+    printf("DEBUG: RESET RESPONSE: %d\n", result);
 
     return result;
 }
@@ -269,6 +268,7 @@ int one_wire_read_byte() {
     for (int loop = 0; loop < 8; loop++) {
         result >>= 1;
         int readed = one_wire_read_bit();
+        printf("DEBUG: READED %d\n", readed);
         if (readed) result |= 0x80;
     }
 
@@ -280,6 +280,7 @@ void one_wire_init() {
     OUT_GPIO(ONE_WIRE_PORT);
     GPIO_CLR = 1 << ONE_WIRE_PORT;
     INP_GPIO(ONE_WIRE_PORT); // stan wysoki
+    usleep(1000);
 
     if (one_wire_reset()) {
         printf("DEBUG: RESET ERROR!\n");
