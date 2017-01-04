@@ -213,14 +213,16 @@ int readLuxes() {
 /* one_wire */
 
 int one_wire_reset() {
+    usleep(1000);
     usleep(G_DELAY);
     OUT_GPIO(ONE_WIRE_PORT);
     usleep(H_DELAY);
     INP_GPIO(ONE_WIRE_PORT);
     usleep(I_DELAY);
-    int result = GPIO_READ(ONE_WIRE_PORT) ^ 0x01;
+    int result = GPIO_READ(ONE_WIRE_PORT);
     usleep(J_DELAY);
-    printf("%d", result);
+    if (result > 1) result = 1;
+    printf("DEBUG: RESET RESPONSE: %d", result);
 
     return result;
 }
@@ -246,8 +248,9 @@ int one_wire_read_bit() {
     usleep(A_DELAY);
     INP_GPIO(ONE_WIRE_PORT);
     usleep(E_DELAY);
-    int result = GPIO_READ(ONE_WIRE_PORT) & 0x01;
+    int result = GPIO_READ(ONE_WIRE_PORT);
     usleep(F_DELAY);
+    if (result > 1) result = 1;
 
     return result;
 }
@@ -278,7 +281,7 @@ void one_wire_init() {
 
     if (one_wire_reset()) {
         printf("DEBUG: NO DEVICES FOUND!\n");
-        exit(1);
+        //exit(1);
     }
 
     one_wire_write_byte(0xCC); // skip ROM command
