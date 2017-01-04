@@ -272,6 +272,7 @@ int one_wire_read_byte() {
 void one_wire_init() {
     OUT_GPIO(ONE_WIRE_PORT);
     GPIO_CLR = 1 << ONE_WIRE_PORT;
+    INP_GPIO(ONE_WIRE_PORT); // stan wysoki
 
     if (one_wire_reset()) {
         printf("DEBUG: NO DEVICES FOUND!");
