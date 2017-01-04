@@ -5,7 +5,6 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <linux/delay.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
@@ -221,7 +220,7 @@ int one_wire_reset() {
     usleep(I_DELAY);
     int result = GPIO_READ(ONE_WIRE_PORT);
 //    usleep(J_DELAY);
-    msleep(1);
+    usleep(1000);
     if (result > 1) result = 1;
     printf("DEBUG: RESET RESPONSE: %d\n", result);
 
@@ -287,7 +286,7 @@ void one_wire_init() {
     }
     one_wire_write_byte(0xCC); // skip ROM command
     one_wire_write_byte(0x44);
-    msleep(750);
+    usleep(750000);
 
     if (one_wire_reset()) {
         printf("DEBUG: RESET ERROR!\n");
