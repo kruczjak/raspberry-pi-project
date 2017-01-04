@@ -280,8 +280,14 @@ void one_wire_init() {
     INP_GPIO(ONE_WIRE_PORT); // stan wysoki
 
     if (one_wire_reset()) {
-        printf("DEBUG: NO DEVICES FOUND!\n");
-        //exit(1);
+        printf("DEBUG: RESET ERROR!\n");
+    }
+    one_wire_write_byte(0xCC); // skip ROM command
+    one_wire_write_byte(0x44);
+    sleep(1);
+
+    if (one_wire_reset()) {
+        printf("DEBUG: RESET ERROR!\n");
     }
 
     one_wire_write_byte(0xCC); // skip ROM command
