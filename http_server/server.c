@@ -268,7 +268,8 @@ int one_wire_read_byte() {
 
     for (int loop = 0; loop < 8; loop++) {
         result >>= 1;
-        if (one_wire_read_bit()) result |= 0x80;
+        int readed = one_wire_read_bit();
+        if (readed) result |= 0x80;
     }
 
     return result;
