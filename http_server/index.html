@@ -21,6 +21,8 @@
   </form>
   <br/>
   <div>Ilość światła: <span id="lux_value"></span></div>
+  <br/>
+  <div>Temp: <span id="temp_value"></span></div>
 
   <div style="text-align: right;">by Jakub Kruczek</div>
 </body>
@@ -55,6 +57,9 @@
       $.get('/?light', function(data) {
         $('#lux_value').text(data);
       });
-    }, 500);
+      $.get('/?temp', function(data) {
+        $('#temp_value').text(data);
+      });
+    }, 750);
   </script>
 </html>
