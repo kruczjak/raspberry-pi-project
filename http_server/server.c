@@ -47,7 +47,7 @@
 
 /* 1-wire ##################################################### */
 
-#define ONE_WIRE_PORT 4
+#define ONE_WIRE_PORT 14
 #define A_DELAY 6
 #define B_DELAY 64
 #define C_DELAY 60
@@ -220,6 +220,7 @@ int one_wire_reset() {
     usleep(I_DELAY);
     int result = GPIO_READ(ONE_WIRE_PORT) ^ 0x01;
     usleep(J_DELAY);
+    printf("%d", result);
 
     return result;
 }
@@ -270,6 +271,9 @@ int one_wire_read_byte() {
 }
 
 void one_wire_init() {
+    INP_GPIO(ONE_WIRE_PORT);
+    OUT_GPIO(ONE_WIRE_PORT);
+    GPIO_CLR = 1 << ONE_WIRE_PORT;
     INP_GPIO(ONE_WIRE_PORT); // stan wysoki
 
     if (one_wire_reset()) {
