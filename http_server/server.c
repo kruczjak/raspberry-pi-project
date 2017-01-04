@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <asm/delay.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
 #include <pthread.h>
@@ -55,7 +56,7 @@
 #define E_DELAY 9
 #define F_DELAY 55
 #define G_DELAY 0
-#define H_DELAY 500
+#define H_DELAY 480
 #define I_DELAY 70
 #define J_DELAY 410
 
@@ -106,7 +107,7 @@ void unmap_peripheral(struct bcm2835_peripheral *p) {
 // output state == 0
 
 void delay() {
-    usleep(I2C_DELAY);
+    udelay(I2C_DELAY);
 }
 
 void send_start() {
@@ -213,14 +214,14 @@ int readLuxes() {
 /* one_wire */
 
 int one_wire_reset() {
-    usleep(G_DELAY);
+    udelay(G_DELAY);
     OUT_GPIO(ONE_WIRE_PORT);
-    usleep(H_DELAY);
+    udelay(H_DELAY);
     INP_GPIO(ONE_WIRE_PORT);
-    usleep(I_DELAY);
+    udelay(I_DELAY);
     int result = GPIO_READ(ONE_WIRE_PORT);
-//    usleep(J_DELAY);
-    usleep(1000);
+//    udelay(J_DELAY);
+    udelay(1000);
     if (result > 1) result = 1;
     printf("DEBUG: RESET RESPONSE: %d\n", result);
 
@@ -231,25 +232,25 @@ void one_wire_write_bit(int bit) {
     if (bit) {
         // write '1' bit
         OUT_GPIO(ONE_WIRE_PORT);
-        usleep(A_DELAY);
+        udelay(A_DELAY);
         INP_GPIO(ONE_WIRE_PORT);
-        usleep(B_DELAY);
+        udelay(B_DELAY);
     } else {
         // write '0' bit
         OUT_GPIO(ONE_WIRE_PORT);
-        usleep(C_DELAY);
+        udelay(C_DELAY);
         INP_GPIO(ONE_WIRE_PORT);
-        usleep(D_DELAY);
+        udelay(D_DELAY);
     }
 }
 
 int one_wire_read_bit() {
     OUT_GPIO(ONE_WIRE_PORT);
-    usleep(A_DELAY);
+    udelay(A_DELAY);
     INP_GPIO(ONE_WIRE_PORT);
-    usleep(E_DELAY);
+    udelay(E_DELAY);
     int result = GPIO_READ(ONE_WIRE_PORT);
-    usleep(F_DELAY);
+    udelay(F_DELAY);
     if (result > 1) result = 1;
 
     return result;
@@ -279,14 +280,14 @@ void one_wire_init() {
     OUT_GPIO(ONE_WIRE_PORT);
     GPIO_CLR = 1 << ONE_WIRE_PORT;
     INP_GPIO(ONE_WIRE_PORT); // stan wysoki
-    usleep(1000);
+    udelay(1000);
 
     if (one_wire_reset()) {
         printf("DEBUG: RESET ERROR!\n");
     }
     one_wire_write_byte(0xCC); // skip ROM command
     one_wire_write_byte(0x44);
-    usleep(750000);
+    udelay(750000);
 
     if (one_wire_reset()) {
         printf("DEBUG: RESET ERROR!\n");
