@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <linux/delay.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
@@ -55,7 +56,7 @@
 #define E_DELAY 9
 #define F_DELAY 55
 #define G_DELAY 0
-#define H_DELAY 480
+#define H_DELAY 500
 #define I_DELAY 70
 #define J_DELAY 410
 
@@ -219,7 +220,8 @@ int one_wire_reset() {
     INP_GPIO(ONE_WIRE_PORT);
     usleep(I_DELAY);
     int result = GPIO_READ(ONE_WIRE_PORT);
-    usleep(J_DELAY);
+//    usleep(J_DELAY);
+    msleep(1);
     if (result > 1) result = 1;
     printf("DEBUG: RESET RESPONSE: %d\n", result);
 
@@ -257,7 +259,6 @@ int one_wire_read_bit() {
 void one_wire_write_byte(int data) {
     for (int loop = 0; loop < 8; loop++) {
         one_wire_write_bit(data & 0x01);
-        printf("DEBUG: WRITING %d\n", data & 0x01);
         data >>= 1;
     }
 }
@@ -268,7 +269,6 @@ int one_wire_read_byte() {
     for (int loop = 0; loop < 8; loop++) {
         result >>= 1;
         int readed = one_wire_read_bit();
-        printf("DEBUG: READED %d\n", readed);
         if (readed) result |= 0x80;
     }
 
@@ -287,15 +287,15 @@ void one_wire_init() {
     }
     one_wire_write_byte(0xCC); // skip ROM command
     one_wire_write_byte(0x44);
-    sleep(1);
+    msleep(750);
 
     if (one_wire_reset()) {
         printf("DEBUG: RESET ERROR!\n");
     }
-
     one_wire_write_byte(0xCC); // skip ROM command
     one_wire_write_byte(0xBE); // read scratchpad command
     for (int i = 0; i < 9; i++) printf("%d\n", one_wire_read_byte());
+
 
     exit(0);
 }
