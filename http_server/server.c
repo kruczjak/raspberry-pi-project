@@ -335,7 +335,31 @@ void one_wire_init() {
 
     int value = (high_byte_lsb << 8) | low_byte_msb;
 
-    printf("%lf st. C", value/16.0);
+    double temp_c = 0;
+
+    if (value >= 0x800) {
+//calculate the fractional part
+        if(value & 0x0001) temp_c += 0.06250;
+        if(value & 0x0002) temp_c += 0.12500;
+        if(value & 0x0004) temp_c += 0.25000;
+        if(value & 0x0008) temp_c += 0.50000;
+
+//calculate the whole number part
+        value = (value >> 4) & 0x00FF;
+        value = value - 0x0001; //subtract 1
+        value = ~value; //ones compliment
+        temp_c = temp_c - (float)(value & 0xFF);
+    } else {
+//calculate the whole number part
+        temp_c = (value >> 4) & 0x00FF;
+//calculate the fractional part
+        if(value & 0x0001) temp_c = temp_c + 0.06250;
+        if(value & 0x0002) temp_c = temp_c + 0.12500;
+        if(value & 0x0004) temp_c = temp_c + 0.25000;
+        if(value & 0x0008) temp_c = temp_c + 0.50000;
+    } //end if else
+
+    printf("%lf st. C", temp_c);
 
     exit(0);
 }
