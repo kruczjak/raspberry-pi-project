@@ -283,7 +283,7 @@ void one_wire_init() {
 
     one_wire_write_byte(0xCC); // skip ROM command
     one_wire_write_byte(0xBE); // read scratchpad command
-    for (int i = 0; i < 9; i++) printf("%d", one_wire_read_byte());
+    for (int i = 0; i < 9; i++) printf("%d\n", one_wire_read_byte());
 
     exit(0);
 }
