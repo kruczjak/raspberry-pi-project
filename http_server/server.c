@@ -309,7 +309,7 @@ int one_wire_read_byte() {
     return result;
 }
 
-void one_wire_init() {
+double one_wire_init() {
     INP_GPIO(ONE_WIRE_PORT);
     OUT_GPIO(ONE_WIRE_PORT);
     GPIO_CLR = 1 << ONE_WIRE_PORT;
@@ -361,7 +361,7 @@ void one_wire_init() {
 
     printf("%lf st. C", temp_c);
 
-    exit(0);
+    return temp_c;
 }
 
 /* one_wire */
@@ -384,6 +384,7 @@ void render_gpio(int);
 void render_luxes(int);
 void write_simple_headers(int);
 char get_simple_state(unsigned int);
+void render_temp(int);
 
 void sigchld_handler(int s) {
     while( wait( NULL ) > 0 );
@@ -516,6 +517,7 @@ void accept_client_request(int client) {
         if (strcasecmp(query_string, "") == 0) return render_index(client);
         if (strcasecmp(query_string, "?leds") == 0) return render_gpio(client);
         if (strcasecmp(query_string, "?light") == 0) return render_luxes(client);
+        if (strcasecmp(query_string, "?temp") == 0) return render_temp(client);
         // GET with query string
 
     }
@@ -603,6 +605,26 @@ void render_luxes(int client) {
     int luxes = readLuxes();
     char str[15];
     sprintf(str, "%d", luxes);
+    strcpy(buffer, str);
+    send(client, buffer, strlen(buffer), 0);
+    strcpy(buffer, "\r\n");
+    send(client, buffer, strlen(buffer), 0);
+    strcpy(buffer, "\r\n");
+    send(client, buffer, strlen(buffer), 0);
+
+    fflush(stdout);
+    close(client);
+}
+
+void render_temp(int client) {
+    printf("DEBUG: Rendering luxes\r\n");
+    char buffer[1024];
+    buffer[0] = END_OF_LINE;
+    write_simple_headers(client);
+
+    double temp = one_wire_init();
+    char str[30];
+    sprintf(str, "%lf", temp);
     strcpy(buffer, str);
     send(client, buffer, strlen(buffer), 0);
     strcpy(buffer, "\r\n");
