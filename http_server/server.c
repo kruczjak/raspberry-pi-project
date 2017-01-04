@@ -57,7 +57,7 @@
 #define G_DELAY 0
 #define H_DELAY 480
 #define I_DELAY 70
-#define J_DELAY 40
+#define J_DELAY 410
 
 /* ############################################################ */
 
