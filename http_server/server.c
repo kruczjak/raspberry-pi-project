@@ -749,7 +749,10 @@ int main( int argc, char * argv[] ) {
         client_socket = accept(server_socket, (struct sockaddr *) &client_addr, &client_addr_length);
 
         if (client_socket == -1) ERROR;
-        if (pthread_create(&client_thread, NULL, (void *(*)(void *)) accept_client_request, (void *) client_socket) != 0) ERROR;
+        pthread_attr_t attr;
+        pthread_attr_init(&attr);
+        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+        if (pthread_create(&client_thread, &attr, (void *(*)(void *)) accept_client_request, (void *) client_socket) != 0) ERROR;
     }
 
     close(server_socket);
