@@ -258,6 +258,7 @@ int one_wire_read_bit() {
 void one_wire_write_byte(int data) {
     for (int loop = 0; loop < 8; loop++) {
         one_wire_write_bit(data & 0x01);
+        printf("DEBUG: WRITING %d\n", data & 0x01);
         data >>= 1;
     }
 }
