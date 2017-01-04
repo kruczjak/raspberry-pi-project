@@ -359,7 +359,7 @@ double one_wire_init() {
         if(value & 0x0008) temp_c = temp_c + 0.50000;
     } //end if else
 
-    printf("%lf st. C", temp_c);
+    printf("%lf st. C\n", temp_c);
 
     return temp_c;
 }
