@@ -245,7 +245,7 @@ int readLuxes() {
     int lux = (int) (value / 1.2);
     printf("!!!luxes: %d\n", lux);
 
-    lcdPosition(lcd, 0, 1);
+    lcdPosition(lcd, 0, 0);
     char buf[10];
     sprintf(buf, "%d lux    ", lux);
     lcdPuts(lcd, buf);
@@ -370,8 +370,13 @@ double one_wire_init() {
     }
 
     printf("%lf st. C\n", temp_c);
+
+    lcdClear(lcd);
     lcdPosition(lcd, 0, 0);
-    char buf[10];
+    char buf[20];
+    sprintf(buf, "%d lux    ", lux);
+    lcdPuts(lcd, buf);
+    lcdPosition(lcd, 0, 1);
     sprintf(buf, "%lf st. C", temp_c);
     lcdPuts(lcd, buf);
 
