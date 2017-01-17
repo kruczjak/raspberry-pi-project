@@ -15,7 +15,7 @@
 #include <sys/time.h>
 
 #define PORT 80
-#define BACKLOG_SIZE 10 // dlugosc kolejki
+#define BACKLOG_SIZE 10 // queue
 #define END_OF_LINE '\0'
 #define SERVER_NAME "Server: kruczjak server\r\n"
 
@@ -26,11 +26,13 @@
 #define GPIO_BASE               (BCM2835_PERI_BASE + 0x200000)
 #define BLOCK_SIZE 		        (4*1024)
 
+// GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x)
 #define INP_GPIO(g)   *(gpio.addr + ((g)/10)) &= ~(7<<(((g)%10)*3))
 #define OUT_GPIO(g)   *(gpio.addr + ((g)/10)) |=  (1<<(((g)%10)*3))
+#define SET_GPIO_ALT(g,a) *(gpio.addr + (((g)/10))) |= (((a)<=3?(a) + 4:(a)==4?3:2)<<(((g)%10)*3))
 
-#define GPIO_SET  *(gpio.addr + 7)
-#define GPIO_CLR  *(gpio.addr + 10)
+#define GPIO_SET  *(gpio.addr + 7)  // sets   bits which are 1 ignores bits which are 0
+#define GPIO_CLR  *(gpio.addr + 10) // clears bits which are 1 ignores bits which are 0
 
 #define GPIO_READ(g)  *(gpio.addr + 13) &= (1<<(g))
 
@@ -60,13 +62,13 @@
 
 /* ############################################################ */
 
-/* lcd ######################################################## */
+/* lcd */
 
 #define LCD_LIGHT 26
 int screen_mode = 0; // 0 - auto, 1 - on, 2 - off
+int screen_on = 0; // 0 - off, 1 - on
 
 /* ############################################################ */
-
 struct bcm2835_peripheral {
     off_t addr_p;
     int mem_fd;
@@ -80,13 +82,22 @@ void enable_port(unsigned int);
 void disable_port(unsigned int);
 void init_output(unsigned int);
 
-int map_peripheral(struct bcm2835_peripheral *p) {
+int map_peripheral(struct bcm2835_peripheral *p)
+{
+    // Open /dev/mem
     if ((p->mem_fd = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) {
         printf("Failed to open /dev/mem, try checking permissions.\n");
         return -1;
     }
 
-    p->map = mmap(NULL, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, p->mem_fd, p->addr_p);
+    p->map = mmap(
+            NULL,
+            BLOCK_SIZE,
+            PROT_READ|PROT_WRITE,
+            MAP_SHARED,
+            p->mem_fd,      // File descriptor to physical memory virtual file '/dev/mem'
+            p->addr_p       // Address in physical map that we want this memory block to expose
+    );
 
     if (p->map == MAP_FAILED) {
         ERROR;
@@ -102,6 +113,8 @@ void unmap_peripheral(struct bcm2835_peripheral *p) {
     munmap(p->map, BLOCK_SIZE);
     close(p->mem_fd);
 }
+
+//sleeping
 
 void delayMicrosecondsHard (unsigned int howLong)
 {
@@ -125,7 +138,7 @@ void udelay(unsigned int howLong)
     /**/ if (howLong ==   0)
         return ;
     else if (howLong  < 100)
-        delayMicrosecondsHard(howLong) ;
+        delayMicrosecondsHard (howLong) ;
     else
     {
         sleeper.tv_sec  = wSecs ;
@@ -135,6 +148,8 @@ void udelay(unsigned int howLong)
 }
 
 /* ############################################################ */
+// input state == 1
+// output state == 0
 
 void delay() {
     udelay(I2C_DELAY);
@@ -168,6 +183,7 @@ int clock_read(void) {
     while(GPIO_READ(scl) == 0);
     delay();
     level = GPIO_READ(sda);
+    printf("CLOCK_READ: readed %d\n", level);
     delay();
     OUT_GPIO(scl);
 
@@ -179,8 +195,10 @@ int send_byte(int byte) {
     int mask = 0x80;
     while(mask) {
         if (byte & mask) {
+            printf("SEND_BYTE: 1\n");
             INP_GPIO(sda);
         } else {
+            printf("SEND_BYTE: 0\n");
             OUT_GPIO(sda);
         }
         clock_read();
@@ -208,11 +226,12 @@ int read_byte(int acknowledgment)
     return(byte);
 }
 
+// startuje i2c
 void i2c_init() {
-    init_output(sda);
-    init_output(scl);
-    disable_port(sda);
-    disable_port(scl);
+    OUT_GPIO(sda);
+    OUT_GPIO(scl);
+    GPIO_CLR = 1 << sda;
+    GPIO_CLR = 1 << scl;
 
     send_start();
     printf("!!! FIRST ACK %d\n", send_byte(0x46));
@@ -220,7 +239,7 @@ void i2c_init() {
     send_stop();
 }
 
-int read_luxes() {
+int readLuxes() {
     send_start();
     printf("!!! ACK %d\n", send_byte(0x47));
     int highByte = read_byte(1);
@@ -252,6 +271,7 @@ int one_wire_reset() {
     INP_GPIO(ONE_WIRE_PORT);
     udelay(I_DELAY);
     int result = GPIO_READ(ONE_WIRE_PORT);
+//    udelay(J_DELAY);
     udelay(1000);
     if (result > 1) result = 1;
     printf("DEBUG: RESET RESPONSE: %d\n", result);
@@ -313,14 +333,16 @@ double one_wire_init() {
     INP_GPIO(ONE_WIRE_PORT); // stan wysoki
     udelay(1000);
 
-    if (one_wire_reset()) printf("DEBUG: RESET ERROR!\n");
-
+    if (one_wire_reset()) {
+        printf("DEBUG: RESET ERROR!\n");
+    }
     one_wire_write_byte(0xCC); // skip ROM command
     one_wire_write_byte(0x44);
     udelay(750000);
 
-    if (one_wire_reset()) printf("DEBUG: RESET ERROR!\n");
-
+    if (one_wire_reset()) {
+        printf("DEBUG: RESET ERROR!\n");
+    }
     one_wire_write_byte(0xCC); // skip ROM command
     one_wire_write_byte(0xBE); // read scratchpad command
     int low_byte_msb = one_wire_read_byte();
@@ -333,22 +355,26 @@ double one_wire_init() {
     double temp_c = 0;
 
     if (value >= 0x800) {
+//calculate the fractional part
         if(value & 0x0001) temp_c += 0.06250;
         if(value & 0x0002) temp_c += 0.12500;
         if(value & 0x0004) temp_c += 0.25000;
         if(value & 0x0008) temp_c += 0.50000;
 
+//calculate the whole number part
         value = (value >> 4) & 0x00FF;
-        value = value - 0x0001;
-        value = ~value;
+        value = value - 0x0001; //subtract 1
+        value = ~value; //ones compliment
         temp_c = temp_c - (float)(value & 0xFF);
     } else {
+//calculate the whole number part
         temp_c = (value >> 4) & 0x00FF;
+//calculate the fractional part
         if(value & 0x0001) temp_c = temp_c + 0.06250;
         if(value & 0x0002) temp_c = temp_c + 0.12500;
         if(value & 0x0004) temp_c = temp_c + 0.25000;
         if(value & 0x0008) temp_c = temp_c + 0.50000;
-    }
+    } //end if else
 
     printf("%lf st. C\n", temp_c);
 
@@ -506,10 +532,12 @@ void accept_client_request(int client) {
         if (strcasecmp(query_string, "?leds") == 0) return render_gpio(client);
         if (strcasecmp(query_string, "?light") == 0) return render_luxes(client);
         if (strcasecmp(query_string, "?temp") == 0) return render_temp(client);
-    }
+        // GET with query string
 
+    }
     // POST przetwarzanie
     if (strcasecmp(request_type, "POST") == 0) {
+        // POST!!!
         char buffer[1024];
         int content_length = -1;
         int number_of_chars;
@@ -517,6 +545,7 @@ void accept_client_request(int client) {
         buffer[0] = 'A';
         buffer[1] = END_OF_LINE;
 
+        // content-length
         number_of_chars = get_line_from_socket_to_buffer(client, buffer, sizeof(buffer));
         while ((number_of_chars > 0) && strcmp("\n", buffer)) {
             buffer[15] = '\0';
@@ -524,12 +553,17 @@ void accept_client_request(int client) {
             number_of_chars = get_line_from_socket_to_buffer(client, buffer, sizeof(buffer));
         }
 
+        printf("DEBUG: CONTENT_LENGTH=%d\r\n", content_length);
+
         char single_byte;
 
         for (int i = 0; i < content_length; i++) {
             recv(client, &single_byte, 1, 0);
+            printf("DEBUG: POST_BODY[%d]=%c\r\n", i, single_byte);
             process_post(i, single_byte);
         }
+        printf("END OF POST\r\n");
+
         response_file_headers(client);
     }
 
@@ -586,7 +620,7 @@ void render_luxes(int client) {
     buffer[0] = END_OF_LINE;
     write_simple_headers(client);
 
-    int luxes = read_luxes();
+    int luxes = readLuxes();
     char str[15];
     sprintf(str, "%d", luxes);
     strcpy(buffer, str);
@@ -601,7 +635,7 @@ void render_luxes(int client) {
 }
 
 void render_temp(int client) {
-    printf("DEBUG: Rendering temp\r\n");
+    printf("DEBUG: Rendering luxes\r\n");
     char buffer[1024];
     buffer[0] = END_OF_LINE;
     write_simple_headers(client);
