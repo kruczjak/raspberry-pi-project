@@ -603,6 +603,10 @@ void render_gpio(int client) {
     buffer[1] = END_OF_LINE;
     send(client, buffer, strlen(buffer), 0);
 
+    buffer[0] = (char) (screen_mode + '0');
+    buffer[1] = END_OF_LINE;
+    send(client, buffer, strlen(buffer), 0);
+
     strcpy(buffer, "\r\n");
     send(client, buffer, strlen(buffer), 0);
 

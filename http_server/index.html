@@ -127,6 +127,7 @@
       $('#led_red').bootstrapToggle(data[0] === '1' ? 'on' : 'off');
       $('#led_green').bootstrapToggle(data[1] === '1' ? 'on' : 'off');
       $('#led_blue').bootstrapToggle(data[2] === '1' ? 'on' : 'off');
+      $("input[name='lcd']").filter('[value=' + data[3] + ']').prop('checked', true);
     });
 
     setInterval(function(){
