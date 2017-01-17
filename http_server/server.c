@@ -161,6 +161,7 @@ void send_stop() {
 }
 
 int clock_read(void) {
+    printf("CLOCK_READ: reading\n");
     int level;
     INP_GPIO(scl);
     delay();
