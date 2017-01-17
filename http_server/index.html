@@ -23,22 +23,20 @@
               <div class="row">
                 <div class="col-sm-4">
                   <label for="led_red" style="color: red;" >
-                    LED czerwony <input type="checkbox" name="led_red" id="led_red" data-toggle="toggle" data-onstyle="danger" data-offstyle="danger"/>
+                    LED czerwony <input class="led_checkbox" type="checkbox" name="led_red" id="led_red" data-toggle="toggle" data-onstyle="danger" data-offstyle="danger"/>
                   </label>
                 </div>
                 <div class="col-sm-4">
                   <label for="led_green" style="color: green;">
-                    LED zielony <input type="checkbox" name="led_green" id="led_green" data-toggle="toggle" data-onstyle="success" data-offstyle="success"/>
+                    LED zielony <input class="led_checkbox" type="checkbox" name="led_green" id="led_green" data-toggle="toggle" data-onstyle="success" data-offstyle="success"/>
                   </label>
                 </div>
                 <div class="col-sm-4">
                   <label for="led_blue" style="color: blue;">
-                    LED niebieski <input type="checkbox" name="led_blue" id="led_blue" data-toggle="toggle" data-onstyle="primary" data-offstyle="primary"/>
+                    LED niebieski <input class="led_checkbox" type="checkbox" name="led_blue" id="led_blue" data-toggle="toggle" data-onstyle="primary" data-offstyle="primary"/>
                   </label>
                 </div>
               </div>
-
-              <button class="btn btn-primary btn-sm pull-right" type="submit" id="send">Ustaw LEDy</button>
             </div>
           </div>
         </form>
@@ -74,9 +72,8 @@
 </body>
 
   <script type="text/javascript">
-    $('#led_form').submit(function(e) {
+    $('.led_checkbox').change(function(e) {
       $.ajax({ type: 'POST', url: '/', data: buildPayload() });
-      e.preventDefault();
     });
 
     function buildPayload() {
