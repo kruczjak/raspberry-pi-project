@@ -748,6 +748,7 @@ int main( int argc, char * argv[] ) {
 
     wiringPiSetup(); // dla lcd
     lcd = lcdInit(2, 16, 4, LCD_RS, LCD_E, LCD_D4, LCD_D5, LCD_D6, LCD_D7, 0, 0, 0, 0); //dla lcd
+    lcdPosition(lcd, 3, 1);
     lcdPuts(lcd, "Hello, world!");
     map_peripheral(&gpio); // mapowanie GPIO
     initialize_ports();
