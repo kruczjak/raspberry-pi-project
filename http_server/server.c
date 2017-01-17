@@ -64,12 +64,12 @@
 #include <wiringPi.h>
 #include <lcd.h>
 #define LCD_LIGHT 26
-#define LCD_RS  15               //Register select pin
-#define LCD_E   18               //Enable Pin
-#define LCD_D4  23               //Data pin 4
-#define LCD_D5  24              //Data pin 5
-#define LCD_D6  25               //Data pin 6
-#define LCD_D7  8               //Data pin 7
+#define LCD_RS  16              //Register select pin
+#define LCD_E   1               //Enable Pin
+#define LCD_D4  4               //Data pin 4
+#define LCD_D5  5              //Data pin 5
+#define LCD_D6  6               //Data pin 6
+#define LCD_D7  10               //Data pin 7
 int screen_mode = 0; // 0 - auto, 1 - on, 2 - off
 int lcd;
 
