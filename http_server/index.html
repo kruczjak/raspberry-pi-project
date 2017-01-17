@@ -124,9 +124,9 @@
     }
 
     $.get('/?leds', function(data) {
-      $('#led_red').prop("checked", data[0] === '1');
-      $('#led_green').prop("checked", data[1] === '1');
-      $('#led_blue').prop("checked", data[2] === '1');
+      $('#led_red').bootstrapToggle(data[0] === '1' ? 'on' : 'off');
+      $('#led_green').bootstrapToggle(data[1] === '1' ? 'on' : 'off');
+      $('#led_blue').bootstrapToggle(data[2] === '1' ? 'on' : 'off');
     });
 
     setInterval(function(){
