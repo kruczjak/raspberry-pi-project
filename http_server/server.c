@@ -62,6 +62,13 @@
 
 /* ############################################################ */
 
+/* lcd */
+
+#define LCD_LIGHT 26
+int screen_mode = 0; // 0 - auto, 1 - on, 2 - off
+int screen_on = 0; // 0 - off, 1 - on
+
+/* ############################################################ */
 struct bcm2835_peripheral {
     off_t addr_p;
     int mem_fd;
@@ -240,6 +247,12 @@ int readLuxes() {
     int value = (highByte << 8) | lowByte;
     int lux = (int) (value / 1.2);
     printf("!!!luxes: %d\n", lux);
+
+    if (lux < 100 && screen_mode == 0) {
+        enable_port(LCD_LIGHT);
+    } else if (screen_mode == 0) {
+        disable_port(LCD_LIGHT);
+    }
 
     return lux;
 }
@@ -686,6 +699,7 @@ void initialize_ports() {
     init_output(LED_RED);
     init_output(LED_GREEN);
     init_output(LED_BLUE);
+    init_output(LCD_LIGHT);
 }
 
 void enable_port(unsigned int port_number) {
@@ -718,6 +732,17 @@ void process_post(int byte_number, char byte) {
         case 2:
             if (byte == '0') enable_port(LED_BLUE);
             if (byte == '1') disable_port(LED_BLUE);
+            return;
+        case 3:
+            if (byte == '0') screen_mode = 0;
+            if (byte == '1') {
+                screen_mode = 1;
+                enable_port(LCD_LIGHT);
+            }
+            if (byte == '2') {
+                screen_mode = 2;
+                disable_port(LCD_LIGHT);
+            }
             return;
         default:
             printf(":/");
