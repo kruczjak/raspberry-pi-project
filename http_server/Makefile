@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -pedantic -std=gnu11 -lpthread
+CFLAGS = -Wall -pedantic -std=gnu11 -lpthread -lwiringPi -lwiringPiDev
 
 all: server
 

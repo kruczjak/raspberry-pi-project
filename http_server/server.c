@@ -61,9 +61,17 @@
 /* ############################################################ */
 
 /* lcd */
-
+#include <wiringPi.h>
+#include <lcd.h>
 #define LCD_LIGHT 26
+#define LCD_RS  15               //Register select pin
+#define LCD_E   18               //Enable Pin
+#define LCD_D4  23               //Data pin 4
+#define LCD_D5  24              //Data pin 5
+#define LCD_D6  25               //Data pin 6
+#define LCD_D7  8               //Data pin 7
 int screen_mode = 0; // 0 - auto, 1 - on, 2 - off
+int lcd;
 
 /* ############################################################ */
 struct bcm2835_peripheral {
@@ -738,6 +746,9 @@ int main( int argc, char * argv[] ) {
     int client_socket;
     pthread_t client_thread;
 
+    wiringPiSetup(); // dla lcd
+    lcd = lcdInit(2, 16, 4, LCD_RS, LCD_E, LCD_D4, LCD_D5, LCD_D6, LCD_D7, 0, 0, 0, 0); //dla lcd
+    lcdPuts(lcd, "Hello, world!");
     map_peripheral(&gpio); // mapowanie GPIO
     initialize_ports();
     one_wire_init();
