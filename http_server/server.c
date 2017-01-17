@@ -78,6 +78,10 @@ struct bcm2835_peripheral {
 
 struct bcm2835_peripheral gpio = {GPIO_BASE};
 
+void enable_port(unsigned int);
+void disable_port(unsigned int);
+void init_output(unsigned int);
+
 int map_peripheral(struct bcm2835_peripheral *p)
 {
     // Open /dev/mem
@@ -389,9 +393,6 @@ int start_socket_listening();
 void process_post(int, char);
 void initialize_ports();
 void render_index(int);
-void enable_port(unsigned int);
-void disable_port(unsigned int);
-void init_output(unsigned int);
 void init_input(unsigned int);
 void render_gpio(int);
 void render_luxes(int);
