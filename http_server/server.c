@@ -245,6 +245,9 @@ int readLuxes() {
     int lux = (int) (value / 1.2);
     printf("!!!luxes: %d\n", lux);
 
+    lcdPosition(lcd, 0, 1);
+    lcdPuts(lcd, sprintf("%d lux    ", lux));
+
     if (lux < 100 && screen_mode == 0) {
         enable_port(LCD_LIGHT);
     } else if (screen_mode == 0) {
@@ -264,7 +267,6 @@ int one_wire_reset() {
     INP_GPIO(ONE_WIRE_PORT);
     udelay(I_DELAY);
     int result = GPIO_READ(ONE_WIRE_PORT);
-//    udelay(J_DELAY);
     udelay(1000);
     if (result > 1) result = 1;
     printf("DEBUG: RESET RESPONSE: %d\n", result);
@@ -366,6 +368,8 @@ double one_wire_init() {
     }
 
     printf("%lf st. C\n", temp_c);
+    lcdPosition(lcd, 0, 0);
+    lcdPuts(lcd, sprintf("%lf st. C", temp_c));
 
     return temp_c;
 }
@@ -748,8 +752,6 @@ int main( int argc, char * argv[] ) {
 
     wiringPiSetup(); // dla lcd
     lcd = lcdInit(2, 16, 4, LCD_RS, LCD_E, LCD_D4, LCD_D5, LCD_D6, LCD_D7, 0, 0, 0, 0); //dla lcd
-    lcdPosition(lcd, 3, 1);
-    lcdPuts(lcd, "Hello, world!");
     map_peripheral(&gpio); // mapowanie GPIO
     initialize_ports();
     one_wire_init();
