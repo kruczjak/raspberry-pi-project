@@ -71,6 +71,7 @@
 #define LCD_D6  6               //Data pin 6
 #define LCD_D7  10               //Data pin 7
 int screen_mode = 0; // 0 - auto, 1 - on, 2 - off
+int lux;
 int lcd;
 
 /* ############################################################ */
@@ -242,7 +243,7 @@ int readLuxes() {
     send_stop();
 
     int value = (highByte << 8) | lowByte;
-    int lux = (int) (value / 1.2);
+    lux = (int) (value / 1.2);
     printf("!!!luxes: %d\n", lux);
 
     lcdPosition(lcd, 0, 0);
