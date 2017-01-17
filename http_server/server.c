@@ -246,7 +246,9 @@ int readLuxes() {
     printf("!!!luxes: %d\n", lux);
 
     lcdPosition(lcd, 0, 1);
-    lcdPuts(lcd, sprintf("%d lux    ", lux));
+    char buf[10];
+    sprintf(buf, "%d lux    ", lux);
+    lcdPuts(lcd, buf);
 
     if (lux < 100 && screen_mode == 0) {
         enable_port(LCD_LIGHT);
@@ -369,7 +371,9 @@ double one_wire_init() {
 
     printf("%lf st. C\n", temp_c);
     lcdPosition(lcd, 0, 0);
-    lcdPuts(lcd, sprintf("%lf st. C", temp_c));
+    char buf[10];
+    sprintf(buf, "%lf st. C", temp_c);
+    lcdPuts(lcd, buf);
 
     return temp_c;
 }
