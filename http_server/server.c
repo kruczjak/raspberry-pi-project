@@ -144,40 +144,40 @@ void udelay(unsigned int howLong)
 
 /* ############################################################ */
 
-void delay() {
+void i2c_delay() {
     udelay(I2C_DELAY);
 }
 
 void send_start() {
     INP_GPIO(sda);
-    delay();
+    i2c_delay();
     INP_GPIO(scl);
-    delay();
+    i2c_delay();
     OUT_GPIO(sda);
-    delay();
+    i2c_delay();
     OUT_GPIO(scl);
-    delay();
+    i2c_delay();
 }
 
 void send_stop() {
     OUT_GPIO(sda);
-    delay();
+    i2c_delay();
     INP_GPIO(scl);
-    delay();
+    i2c_delay();
     INP_GPIO(sda);
-    delay();
+    i2c_delay();
 }
 
 int clock_read(void) {
     printf("CLOCK_READ: reading\n");
     int level;
     INP_GPIO(scl);
-    delay();
+    i2c_delay();
     while(GPIO_READ(scl) == 0);
-    delay();
+    i2c_delay();
     level = GPIO_READ(sda);
     printf("CLOCK_READ: readed %d\n", level);
-    delay();
+    i2c_delay();
     OUT_GPIO(scl);
 
     if (level > 1) level = 1;
